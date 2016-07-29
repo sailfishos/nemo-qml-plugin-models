@@ -277,7 +277,7 @@ Item {
             filterModel.filterRequirement = FilterModel.PassAnyFilter
             compare(repeater.count, 4)
             compare(repeater.itemAt(0).nameValue, 'Alice')
-            compare(repeater.itemAt(4).nameValue, 'Eddie')
+            compare(repeater.itemAt(3).nameValue, 'Eddie')
 
             filterModel.filterRequirement = FilterModel.PassAllFilters
             compare(repeater.count, 0)
