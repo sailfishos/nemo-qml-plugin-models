@@ -279,6 +279,7 @@ void BaseFilterModel::setModel(QAbstractListModel *model)
     }
 
     modelPopulated_ = QMetaProperty();
+    objectGet_ = QMetaMethod();
     populated_ = false;
     roles_.clear();
     mapping_.clear();
@@ -306,6 +307,8 @@ void BaseFilterModel::setModel(QAbstractListModel *model)
             connect(model_, modelPopulated_.notifySignal(), this, handler);
         }
 
+        objectGet_ = mo->method(mo->indexOfMethod("get(int)"));
+
         if (!modelPopulated_.isValid() || modelPopulated_.read(model_).toBool()) {
             populateModel();
             populated_ = true;
@@ -313,3 +316,60 @@ void BaseFilterModel::setModel(QAbstractListModel *model)
     }
 }
 
+QVariant BaseFilterModel::getSourceValue(int sourceRow, int role) const
+{
+    return model_->data(model_->index(sourceRow, 0), role);
+}
+
+QVariant BaseFilterModel::getSourceValue(int sourceRow, const QMetaProperty &property) const
+{
+    QObject *obj = 0;
+    if (objectGet_.isValid() && objectGet_.invoke(model_, Q_RETURN_ARG(QObject*, obj), Q_ARG(int, sourceRow))) {
+        if (obj)
+            return property.read(obj);
+    }
+    return QVariant();
+}
+
+int BaseFilterModel::findRole(const QString &roleName) const
+{
+    if (model_) {
+        const QHash<int, QByteArray> &roles = model_->roleNames();
+        for (auto it = roles.cbegin(), end = roles.cend(); it != end; ++it) {
+            if (it.value() == roleName) {
+                return it.key();
+            }
+        }
+    }
+
+    qWarning() << "No matching role in model:" << roleName;
+    return -1;
+}
+
+QMetaProperty BaseFilterModel::findProperty(const QByteArray &propertyName) const
+{
+    QMetaProperty property;
+
+    if (model_ && model_->rowCount() > 0) {
+        if (objectGet_.isValid()) {
+            QObject *obj;
+            if (objectGet_.invoke(model_, Q_RETURN_ARG(QObject*, obj), Q_ARG(int, 0))) {
+                if (obj) {
+                    const QMetaObject *mo(obj->metaObject());
+                    property = mo->property(mo->indexOfProperty(propertyName));
+                    if (!property.isValid()) {
+                        qWarning() << "No matching property in object:" << obj << propertyName;
+                    }
+                } else {
+                    qWarning() << "Could not retrieve valid object:" << model_;
+                }
+            } else {
+                qWarning() << "Could not invoke get:" << model_;
+            }
+        } else {
+            qWarning() << "No object get function in model:" << model_;
+        }
+    }
+
+    return property;
+}

@@ -83,8 +83,15 @@ protected:
     virtual void setModel(QAbstractListModel *model);
     virtual bool includeItem(int sourceRow) const = 0;
 
+    QVariant getSourceValue(int sourceRow, int role) const;
+    QVariant getSourceValue(int sourceRow, const QMetaProperty &property) const;
+
+    int findRole(const QString &roleName) const;
+    QMetaProperty findProperty(const QByteArray &propertyName) const;
+
     QAbstractListModel *model_;
     QMetaProperty modelPopulated_;
+    QMetaMethod objectGet_;
     bool populated_;
     std::vector<int> mapping_;
     std::vector<QPair<int, QByteArray>> roles_;

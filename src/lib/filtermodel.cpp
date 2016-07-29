@@ -184,19 +184,6 @@ FilterModel::FilterRequirement FilterModel::filterRequirement() const
     return requirement_;
 }
 
-void FilterModel::setModel(QAbstractListModel *model)
-{
-    objectGet_ = QMetaMethod();
-
-    BaseFilterModel::setModel(model);
-
-    if (model_) {
-        // Find the 'QObject *get(int)' method if present
-        const QMetaObject *mo(model_->metaObject());
-        objectGet_ = mo->method(mo->indexOfMethod("get(int)"));
-    }
-}
-
 bool FilterModel::includeItem(int sourceRow) const
 {
     if (!filters_.isEmpty()) {
@@ -295,52 +282,17 @@ bool FilterModel::passesFilter(int sourceRow, const FilterData &filter) const
 QVariant FilterModel::itemValue(int sourceRow, const FilterData &filter) const
 {
     if (filter.role_ != -1) {
-        return model_->data(model_->index(sourceRow, 0), filter.role_);
+        return getSourceValue(sourceRow, filter.role_);
     } else if (filter.property_.isValid()) {
-        QObject *obj = 0;
-        if (objectGet_.invoke(model_, Q_RETURN_ARG(QObject*, obj), Q_ARG(int, sourceRow))) {
-            if (obj) {
-                return filter.property_.read(obj);
-            }
-        }
+        return getSourceValue(sourceRow, filter.property_);
     }
 
     if (!filter.initialized_) {
         filter.initialized_ = true;
         if (!filter.roleName_.isEmpty()) {
-            if (filter.role_ == -1) {
-                const QHash<int, QByteArray> &roles = model_->roleNames();
-                for (auto it = roles.cbegin(), end = roles.cend(); it != end; ++it) {
-                    if (it.value() == filter.roleName_) {
-                        filter.role_ = it.key();
-                        break;
-                    }
-                }
-                if (filter.role_ == -1) {
-                    qWarning() << "No matching role in model:" << filter.roleName_;
-                }
-            }
+            filter.role_ = findRole(filter.roleName_);
         } else if (!filter.propertyName_.isEmpty()) {
-            if (objectGet_.isValid()) {
-                QObject *obj;
-                if (objectGet_.invoke(model_, Q_RETURN_ARG(QObject*, obj), Q_ARG(int, sourceRow))) {
-                    if (obj) {
-                        if (!filter.property_.isValid()) {
-                            const QMetaObject *mo(obj->metaObject());
-                            filter.property_ = mo->property(mo->indexOfProperty(filter.propertyName_));
-                            if (!filter.property_.isValid()) {
-                                qWarning() << "No matching property in object:" << obj << filter.propertyName_;
-                            }
-                        }
-                    } else {
-                        qWarning() << "Could not retrieve valid object:" << model_ << sourceRow;
-                    }
-                } else {
-                    qWarning() << "Could not invoke get:" << model_ << sourceRow;
-                }
-            } else {
-                qWarning() << "No object get function in model";
-            }
+            filter.property_ = findProperty(filter.propertyName_);
         }
 
         // Try again after initialization
