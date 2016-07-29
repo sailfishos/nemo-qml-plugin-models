@@ -89,6 +89,7 @@ protected:
         bool operator!=(const FilterData &other) const { return !operator==(other); }
     };
 
+    bool filtered() const override;
     bool includeItem(int sourceRow) const override;
 
     bool passesFilter(int sourceRow, const FilterData &filter) const;

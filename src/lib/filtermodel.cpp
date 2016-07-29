@@ -184,6 +184,11 @@ FilterModel::FilterRequirement FilterModel::filterRequirement() const
     return requirement_;
 }
 
+bool FilterModel::filtered() const
+{
+    return !filters_.isEmpty();
+}
+
 bool FilterModel::includeItem(int sourceRow) const
 {
     if (!filters_.isEmpty()) {

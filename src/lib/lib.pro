@@ -1,14 +1,18 @@
 TEMPLATE = lib
 TARGET = nemomodels-qt5
 
-CONFIG += create_pc create_prl
+CONFIG += create_pc create_prl link_pkgconfig
+
+PKGCONFIG += mlocale5
 
 SOURCES += \
     basefiltermodel.cpp \
-    filtermodel.cpp
+    filtermodel.cpp \
+    searchmodel.cpp
 HEADERS += \
     basefiltermodel.h \
-    filtermodel.h
+    filtermodel.h \
+    searchmodel.h
 
 target.path = $$[QT_INSTALL_LIBS]
 pkgconfig.files = $$TARGET.pc
@@ -16,7 +20,8 @@ pkgconfig.path = $$target.path/pkgconfig
 headers.path = /usr/include/$$TARGET
 headers.files =\
     basefiltermodel.h \
-    filtermodel.h
+    filtermodel.h \
+    searchmodel.h
 
 QMAKE_PKGCONFIG_NAME = lib$$TARGET
 QMAKE_PKGCONFIG_DESCRIPTION = Library containing utility models for exposing data to QML
