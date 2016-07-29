@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testdefinition version="1.0">
+   <suite name="nemo-qml-plugin-models-qt5-tests" domain="mw">
+       <set name="unit-tests" feature="nemo-qml-plugin-models-qt5">
+           <case name="FilterModel">
+               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_filtermodel.qml</step>
+           </case>
+       </set>
+   </suite>
+</testdefinition>
