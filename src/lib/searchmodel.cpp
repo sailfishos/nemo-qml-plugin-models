@@ -259,10 +259,17 @@ QList<QStringList> patternTokens(const QString &string, Qt::CaseSensitivity case
     return rv;
 }
 
-bool partialMatch(const QString &key, const QChar * const vbegin, const QChar * const vend)
+static const QChar *cbegin(const QString &s) { return s.cbegin(); }
+static const QChar *cend(const QString &s) { return s.cend(); }
+
+static const QChar *cbegin(const QStringRef &r) { return r.data(); }
+static const QChar *cend(const QStringRef &r) { return r.data() + r.size(); }
+
+template <typename StringType>
+bool partialMatch(const StringType &key, const QChar * const vbegin, const QChar * const vend)
 {
     // Note: both key and value must already be in normalization form D
-    const QChar *kbegin = key.cbegin(), *kend = key.cend();
+    const QChar *kbegin = cbegin(key), *kend = cend(key);
 
     const QChar *vit = vbegin, *kit = kbegin;
     while (kit != kend) {
@@ -295,28 +302,45 @@ bool partialMatch(const QString &key, const QChar * const vbegin, const QChar * 
     return false;
 }
 
-bool partialMatch(const std::vector<const QString *> &tokens, const QString &value)
+bool partialMatch(const std::vector<const QString *> &tokens, const QString &value, SearchModel::MatchType type)
 {
     const QChar *vbegin = value.cbegin(), *vend = value.cend();
 
-    // Find which subset of keys the value might match
-    typedef std::vector<const QString *>::const_iterator VectorIterator;
-    std::pair<VectorIterator, VectorIterator> bounds = std::equal_range(tokens.cbegin(), tokens.cend(), vbegin, FirstElementLessThanIndirect());
-    for ( ; bounds.first != bounds.second; ++bounds.first) {
-        const QString &key(*(*bounds.first));
-        if (partialMatch(key, vbegin, vend))
-            return true;
+    if (type == SearchModel::MatchBeginning) {
+        // Find which subset of keys the value might match
+        typedef std::vector<const QString *>::const_iterator VectorIterator;
+        std::pair<VectorIterator, VectorIterator> bounds = std::equal_range(tokens.cbegin(), tokens.cend(), vbegin, FirstElementLessThanIndirect());
+        for ( ; bounds.first != bounds.second; ++bounds.first) {
+            const QString &key(*(*bounds.first));
+            if (partialMatch(key, vbegin, vend))
+                return true;
+        }
+    } else if (type == SearchModel::MatchAnywhere) {
+        // Test all tokens that contain the initial character (in normalization form D)
+        for (const QString *token : tokens) {
+            // Test each possible location in the token
+            for (auto begin = token->cbegin(), it = begin, end = token->cend(); it != end; ) {
+                it = std::find(it, end, *vbegin);
+                if (it != end) {
+                    const QStringRef key(token->midRef((it - begin)));
+                    if (partialMatch(key, vbegin, vend))
+                        return true;
+
+                    ++it;
+                }
+            }
+        }
     }
 
     return false;
 }
 
-bool matchTokens(const std::vector<const QString *> &tokens, const QList<QStringList> &patterns)
+bool matchTokens(const std::vector<const QString *> &tokens, const QList<QStringList> &patterns, SearchModel::MatchType type)
 {
     for (const QStringList &part : patterns) {
         bool match = false;
         for (const QString &alternative : part) {
-            if (partialMatch(tokens, alternative)) {
+            if (partialMatch(tokens, alternative, type)) {
                 match = true;
                 break;
             }
@@ -335,6 +359,7 @@ bool matchTokens(const std::vector<const QString *> &tokens, const QList<QString
 SearchModel::SearchModel(QObject *parent)
     : BaseFilterModel(parent)
     , sensitivity_(Qt::CaseSensitive)
+    , matchType_(MatchBeginning)
 {
 }
 
@@ -433,6 +458,24 @@ Qt::CaseSensitivity SearchModel::caseSensitivity() const
     return sensitivity_;
 }
 
+void SearchModel::setMatchType(MatchType type)
+{
+    if (type != matchType_) {
+        matchType_ = type;
+
+        if (populated_ && model_) {
+            buildMapping();
+        }
+
+        emit matchTypeChanged();
+    }
+}
+
+SearchModel::MatchType SearchModel::matchType() const
+{
+    return matchType_;
+}
+
 bool SearchModel::filtered() const
 {
     return !pattern_.isEmpty();
@@ -448,7 +491,7 @@ bool SearchModel::includeItem(int sourceRow) const
         itemTokens = std::move(searchTokens(sourceRow));
     }
 
-    return matchTokens((sensitivity_ == Qt::CaseInsensitive ? itemTokens->second : itemTokens->first), patterns_);
+    return matchTokens((sensitivity_ == Qt::CaseInsensitive ? itemTokens->second : itemTokens->first), patterns_, matchType_);
 }
 
 std::unique_ptr<SearchModel::TokenList> SearchModel::searchTokens(int sourceRow) const

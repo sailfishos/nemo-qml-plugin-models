@@ -48,8 +48,15 @@ class Q_DECL_EXPORT SearchModel : public BaseFilterModel
     Q_PROPERTY(QStringList searchProperties READ searchProperties WRITE setSearchProperties NOTIFY searchPropertiesChanged)
     Q_PROPERTY(QString pattern READ pattern WRITE setPattern NOTIFY patternChanged)
     Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
+    Q_PROPERTY(MatchType matchType READ matchType WRITE setMatchType NOTIFY matchTypeChanged)
+    Q_ENUMS(MatchType)
 
 public:
+    enum MatchType {
+        MatchBeginning,
+        MatchAnywhere
+    };
+
     typedef std::pair<std::vector<const QString *>, std::vector<const QString *>> TokenList;
 
     explicit SearchModel(QObject *parent = 0);
@@ -66,11 +73,15 @@ public:
     void setCaseSensitivity(Qt::CaseSensitivity sensitivity);
     Qt::CaseSensitivity caseSensitivity() const;
 
+    void setMatchType(MatchType type);
+    MatchType matchType() const;
+
 signals:
     void searchRolesChanged();
     void searchPropertiesChanged();
     void patternChanged();
     void caseSensitivityChanged();
+    void matchTypeChanged();
 
 protected:
     bool filtered() const override;
@@ -91,6 +102,7 @@ protected:
     QStringList propertyNames_;
     QString pattern_;
     Qt::CaseSensitivity sensitivity_;
+    MatchType matchType_;
 
     mutable std::vector<int> roles_;
     mutable std::vector<QMetaProperty> properties_;

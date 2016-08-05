@@ -236,6 +236,7 @@ Item {
             compare(searchModel.count, 0)
             compare(searchModel.pattern, '')
             compare(searchModel.caseSensitivity, Qt.CaseSensitive)
+            compare(searchModel.matchType, SearchModel.MatchBeginning)
         }
 
         function test_b_unfiltered() {
@@ -319,11 +320,41 @@ Item {
             compare(repeater.count, 1)
             compare(repeater.itemAt(0).nameValue, 'Andy')
 
+            searchModel.searchRoles = [ 'name' ]
+            compare(repeater.count, 0)
+
+            searchModel.pattern = 'n'
+            compare(repeater.count, 0)
+
+            searchModel.matchType = SearchModel.MatchAnywhere
+            compare(repeater.count, 3)
+            compare(repeater.itemAt(0).nameValue, 'Andy')
+            compare(repeater.itemAt(2).nameValue, 'Antti')
+
+            searchModel.pattern = 'nt'
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).nameValue, 'Antonio')
+            compare(repeater.itemAt(1).nameValue, 'Antti')
+
+            searchModel.pattern = 'ntt'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).nameValue, 'Antti')
+
+            searchModel.pattern = 'nio'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).nameValue, 'Antonio')
+
+            searchModel.matchType = SearchModel.MatchBeginning
+            compare(repeater.count, 0)
+
             /* TODO: Does not work with ListElement members...
             */
 
             repeater.model = null
+
+            searchModel.searchRoles = [ 'order' ]
             searchModel.sourceModel = otherModel
+
             repeater.model = searchModel
             compare(repeater.count, 0)
 
@@ -371,6 +402,7 @@ Item {
             searchModel.searchRoles = []
             searchModel.pattern = ''
             searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.matchType = SearchModel.MatchBeginning
 
             searchModel.sourceModel = refineModel
             compare(searchModel.populated, true)
@@ -482,6 +514,7 @@ Item {
             searchModel.sourceModel = null
             searchModel.searchRoles = []
             searchModel.pattern = ''
+            searchModel.matchType = SearchModel.MatchBeginning
 
             searchModel.sourceModel = decompositionModel
             compare(searchModel.populated, true)
