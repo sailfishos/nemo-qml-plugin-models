@@ -50,6 +50,8 @@ class Q_DECL_EXPORT SearchModel : public BaseFilterModel
     Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
 
 public:
+    typedef std::pair<std::vector<const QString *>, std::vector<const QString *>> TokenList;
+
     explicit SearchModel(QObject *parent = 0);
 
     void setSearchRoles(const QStringList &roles);
@@ -74,7 +76,7 @@ protected:
     bool filtered() const override;
     bool includeItem(int sourceRow) const override;
 
-    std::unique_ptr<std::vector<QString>> searchTokens(int sourceRow) const;
+    std::unique_ptr<TokenList> searchTokens(int sourceRow) const;
     void searchTokensInvalidated();
 
     void setModel(QAbstractListModel *model) override;
@@ -92,9 +94,9 @@ protected:
 
     mutable std::vector<int> roles_;
     mutable std::vector<QMetaProperty> properties_;
-    mutable std::vector<QString> patterns_;
+    mutable QList<QStringList> patterns_;
 
-    mutable std::vector<std::shared_ptr<std::vector<QString>>> tokens_;
+    mutable std::vector<std::shared_ptr<TokenList>> tokens_;
 };
 
 #endif // SEARCHMODEL_H

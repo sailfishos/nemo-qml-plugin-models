@@ -135,6 +135,76 @@ Item {
             name: 'abz'
             order: 10
         }
+        ListElement {
+            name: 'Abcdez'
+            order: 11
+        }
+        ListElement {
+            name: 'ABcDEfz'
+            order: 12
+        }
+        ListElement {
+            name: 'Az'
+            order: 13
+        }
+        ListElement {
+            name: 'AbCDefgz'
+            order: 14
+        }
+        ListElement {
+            name: 'ABz'
+            order: 15
+        }
+    }
+
+    ListModel {
+        id: decompositionModel
+
+        ListElement {
+            name: 'Elvis'
+            order: 1
+        }
+        ListElement {
+            name: 'elvis'
+            order: 2
+        }
+        ListElement {
+            name: 'Ëlvis'
+            order: 3
+        }
+        ListElement {
+            name: 'Elviß'
+            order: 4
+        }
+        ListElement {
+            name: 'Ælvis'
+            order: 5
+        }
+        ListElement {
+            name: 'ælvis'
+            order: 6
+        }
+        ListElement {
+            name: 'Ølvis'
+            order: 7
+        }
+        ListElement {
+            name: 'Ølviß'
+            order: 8
+        }
+    }
+
+    ListModel {
+        id: apostropheModel
+
+        ListElement {
+            name: 'D\'urbanville'
+            order: 1
+        }
+        ListElement {
+            name: 'Talkin\' Blues'
+            order: 2
+        }
     }
 
     SearchModel {
@@ -304,7 +374,7 @@ Item {
 
             searchModel.sourceModel = refineModel
             compare(searchModel.populated, true)
-            compare(searchModel.count, 10)
+            compare(searchModel.count, 15)
 
             repeater.model = searchModel
 
@@ -363,6 +433,288 @@ Item {
             compare(repeater.count, 6)
             compare(repeater.itemAt(0).orderValue, 1)
             compare(repeater.itemAt(5).orderValue, 9)
+
+            searchModel.pattern = 'a'
+            compare(repeater.count, 10)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(9).orderValue, 10)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 15)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(14).orderValue, 15)
+
+            searchModel.pattern = 'ab'
+            compare(repeater.count, 12)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(11).orderValue, 15)
+
+            searchModel.pattern = 'abcd'
+            compare(repeater.count, 8)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(7).orderValue, 14)
+
+            searchModel.pattern = 'abcdef'
+            compare(repeater.count, 4)
+            compare(repeater.itemAt(0).orderValue, 7)
+            compare(repeater.itemAt(3).orderValue, 14)
+
+            searchModel.pattern = 'abcde'
+            compare(repeater.count, 7)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(6).orderValue, 14)
+
+            searchModel.pattern = 'ab'
+            compare(repeater.count, 12)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(11).orderValue, 15)
+
+            searchModel.pattern = ''
+            compare(repeater.count, 15)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(14).orderValue, 15)
+        }
+
+        function test_f_decomposition() {
+            repeater.model = null
+            compare(repeater.count, 0)
+
+            searchModel.sourceModel = null
+            searchModel.searchRoles = []
+            searchModel.pattern = ''
+
+            searchModel.sourceModel = decompositionModel
+            compare(searchModel.populated, true)
+            compare(searchModel.count, 8)
+
+            repeater.model = searchModel
+
+            searchModel.searchRoles = [ 'name' ]
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Elvis'
+            compare(repeater.count, 3)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(2).orderValue, 4)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 4)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(3).orderValue, 4)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'elvis'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 2)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 4)
+            compare(repeater.itemAt(0).orderValue, 1)
+            compare(repeater.itemAt(3).orderValue, 4)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Ëlvis'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 3)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 3)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'ëlvis'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 3)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Elviß'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 4)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 4)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'elviß'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 4)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Ælvis'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 5)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 5)
+            compare(repeater.itemAt(1).orderValue, 6)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'ælvis'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 6)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 5)
+            compare(repeater.itemAt(1).orderValue, 6)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'AElvis'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 5)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 5)
+            compare(repeater.itemAt(1).orderValue, 6)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'aelvis'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 6)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 5)
+            compare(repeater.itemAt(1).orderValue, 6)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Aelvis'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 5)
+            compare(repeater.itemAt(1).orderValue, 6)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Alvis'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'alvis'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Ølvis'
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 7)
+            compare(repeater.itemAt(1).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 7)
+            compare(repeater.itemAt(1).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'ølvis'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 7)
+            compare(repeater.itemAt(1).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Olvis'
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 7)
+            compare(repeater.itemAt(1).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 7)
+            compare(repeater.itemAt(1).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'olvis'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 2)
+            compare(repeater.itemAt(0).orderValue, 7)
+            compare(repeater.itemAt(1).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'Ølviß'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'ølviß'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 8)
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.pattern = 'olviss'
+            compare(repeater.count, 0)
+
+            searchModel.caseSensitivity = Qt.CaseInsensitive
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 8)
+        }
+
+        function test_g_apostrophe() {
+            repeater.model = null
+            compare(repeater.count, 0)
+
+            searchModel.sourceModel = null
+            searchModel.searchRoles = []
+            searchModel.pattern = ''
+
+            searchModel.sourceModel = apostropheModel
+            compare(searchModel.populated, true)
+            compare(searchModel.count, 2)
+
+            repeater.model = searchModel
+
+            searchModel.caseSensitivity = Qt.CaseSensitive
+            searchModel.searchRoles = [ 'name' ]
+
+            searchModel.pattern = 'D'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 1)
+
+            searchModel.pattern = 'D\''
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 1)
+
+            searchModel.pattern = 'D\'urbanville'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 1)
+
+            searchModel.pattern = 'Talkin'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 2)
+
+            searchModel.pattern = 'Talkin\''
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 2)
+
+            searchModel.pattern = 'Talkin\' Blues'
+            compare(repeater.count, 1)
+            compare(repeater.itemAt(0).orderValue, 2)
         }
     }
 }
