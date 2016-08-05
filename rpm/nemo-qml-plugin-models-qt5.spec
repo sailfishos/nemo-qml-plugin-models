@@ -46,6 +46,10 @@ make %{?_smp_mflags}
 rm -rf %{buildroot}
 %qmake5_install
 
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
 %files
 %defattr(-,root,root,-)
 %{_libdir}/libnemomodels-qt5.so*
