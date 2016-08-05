@@ -78,13 +78,42 @@ protected slots:
 protected:
     void populateModel();
 
+    void buildMapping(bool reportChanges = true);
+    void refineMapping();
+    void unrefineMapping();
+
     int sourceRow(int row) const;
+    int indexForSourceRow(int sourceRow) const;
 
     virtual void setModel(QAbstractListModel *model);
+
+    virtual bool filtered() const = 0;
     virtual bool includeItem(int sourceRow) const = 0;
+
+    QVariant getSourceValue(int sourceRow, int role) const;
+    QVariant getSourceValue(int sourceRow, const QMetaProperty &property) const;
+
+    int findRole(const QString &roleName) const;
+    QMetaProperty findProperty(const QByteArray &propertyName) const;
+
+    virtual void sourceItemsInserted(int insertIndex, int insertCount);
+    virtual void itemsInserted(int insertIndex, int insertCount);
+
+    virtual void sourceItemsMoved(int moveIndex, int moveCount, int insertIndex);
+    virtual void itemsMoved(int moveIndex, int moveCount, int insertIndex);
+
+    virtual void sourceItemsRemoved(int removeIndex, int removeCount);
+    virtual void itemsRemoved(int removeIndex, int removeCount);
+
+    virtual void sourceItemsChanged(int changeIndex, int changeCount);
+    virtual void itemsChanged(int changeIndex, int changeCount);
+
+    virtual void sourceItemsCleared();
+    virtual void itemsCleared();
 
     QAbstractListModel *model_;
     QMetaProperty modelPopulated_;
+    QMetaMethod objectGet_;
     bool populated_;
     std::vector<int> mapping_;
     std::vector<QPair<int, QByteArray>> roles_;

@@ -89,7 +89,7 @@ protected:
         bool operator!=(const FilterData &other) const { return !operator==(other); }
     };
 
-    void setModel(QAbstractListModel *model) override;
+    bool filtered() const override;
     bool includeItem(int sourceRow) const override;
 
     bool passesFilter(int sourceRow, const FilterData &filter) const;
@@ -97,7 +97,6 @@ protected:
 
     QList<FilterData> filters_;
     FilterRequirement requirement_;
-    mutable QMetaMethod objectGet_;
 };
 
 #endif // FILTERMODEL_H

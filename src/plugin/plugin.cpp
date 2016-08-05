@@ -31,6 +31,7 @@
  */
 
 #include "filtermodel.h"
+#include "searchmodel.h"
 
 #include <QtGlobal>
 #include <QtQml>
@@ -49,6 +50,7 @@ public:
         Q_ASSERT(uri == QLatin1String("org.nemomobile.models"));
 
         qmlRegisterType<FilterModel>(uri, 1, 0, "FilterModel");
+        qmlRegisterType<SearchModel>(uri, 1, 0, "SearchModel");
     }
 };
 

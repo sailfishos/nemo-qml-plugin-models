@@ -138,6 +138,8 @@ void BaseFilterModel::sourceRowsInserted(const QModelIndex &parent, int first, i
     if (parent.isValid())
         return;
 
+    sourceItemsInserted(first, (last - first + 1));
+
     std::vector<int> insertItems;
     for (int i = first; i <= last; ++i)
         if (includeItem(i))
@@ -152,6 +154,7 @@ void BaseFilterModel::sourceRowsInserted(const QModelIndex &parent, int first, i
 
     beginInsertRows(QModelIndex(), insertIndex, insertIndex + insertCount - 1);
     mapping_.insert(firstIt, insertItems.cbegin(), insertItems.cend());
+    itemsInserted(insertIndex, insertCount);
     endInsertRows();
 
     emit countChanged();
@@ -186,9 +189,14 @@ void BaseFilterModel::sourceRowsMoved(const QModelIndex &parent, int first, int 
     beginMoveRows(QModelIndex(), moveIndex, moveIndex + moveCount - 1, QModelIndex(), destinationIndex);
     mapping_.erase(firstIt, lastIt);
     auto insertIt = std::lower_bound(mapping_.begin(), mapping_.end(), row);
+    const int insertIndex(insertIt - mapping_.begin());
     for (int i = 0; i < moveCount; ++i, ++insertIt) {
         insertIt = mapping_.insert(insertIt, row + i);
     }
+
+    sourceItemsMoved(first, (last - first + 1), row);
+    itemsMoved(moveIndex, moveCount, insertIndex);
+
     endMoveRows();
 }
 
@@ -210,11 +218,14 @@ void BaseFilterModel::sourceRowsRemoved(const QModelIndex &parent, int first, in
     if (lastIt == firstIt)
         return;
 
+    sourceItemsRemoved(first, (last - first + 1));
+
     const int removeIndex(firstIt - mapping_.begin());
     const int removeCount(lastIt - firstIt);
 
     beginRemoveRows(QModelIndex(), removeIndex, removeIndex + removeCount - 1);
     mapping_.erase(firstIt, lastIt);
+    itemsRemoved(removeIndex, removeCount);
     endRemoveRows();
 
     emit countChanged();
@@ -239,6 +250,9 @@ void BaseFilterModel::sourceDataChanged(const QModelIndex &topLeft, const QModel
     if (lastIt != mapping_.end() && *lastIt == last)
         ++lastIndex;
 
+    sourceItemsChanged(first, (last - first + 1));
+    itemsChanged(firstIndex, (lastIndex - firstIndex + 1));
+
     emit dataChanged(index(firstIndex, topLeft.column()), index(lastIndex, bottomRight.column()), roles);
 }
 
@@ -250,26 +264,169 @@ void BaseFilterModel::sourceLayoutChanged()
 
 void BaseFilterModel::populateModel()
 {
-    mapping_.clear();
+    const size_t previousCount(mapping_.size());
 
     beginResetModel();
 
-    if (model_) {
-        for (int i = 0, n = model_->rowCount(); i < n; ++i) {
-            if (includeItem(i)) {
-                mapping_.push_back(i);
+    sourceItemsCleared();
+    if (model_)
+        sourceItemsInserted(0, model_->rowCount());
+
+    buildMapping(false);
+
+    endResetModel();
+
+    if (previousCount != mapping_.size())
+        emit countChanged();
+}
+
+void BaseFilterModel::buildMapping(bool reportChanges)
+{
+    // TODO: synchronize_lists would be useful here
+    const int removeCount(mapping_.size());
+    if (removeCount) {
+        if (reportChanges) {
+            beginRemoveRows(QModelIndex(), 0, removeCount - 1);
+        }
+        mapping_.clear();
+        itemsCleared();
+        if (reportChanges) {
+            endRemoveRows();
+        }
+    }
+
+    const int sourceItemCount(model_->rowCount());
+    if (sourceItemCount) {
+        std::vector<int> insertItems;
+        insertItems.reserve(sourceItemCount);
+        if (filtered()) {
+            for (int i = 0, n = model_->rowCount(); i < n; ++i) {
+                if (includeItem(i)) {
+                    insertItems.push_back(i);
+                }
+            }
+        } else {
+            insertItems.resize(sourceItemCount);
+            std::iota(insertItems.begin(), insertItems.end(), 0);
+        }
+
+        if (!insertItems.empty()) {
+            const int insertCount(insertItems.size());
+            if (reportChanges) {
+                beginInsertRows(QModelIndex(), 0, insertCount - 1);
+            }
+            mapping_.assign(insertItems.cbegin(), insertItems.cend());
+            itemsInserted(0, insertCount);
+            if (reportChanges) {
+                endInsertRows();
             }
         }
     }
 
-    endResetModel();
+    if (reportChanges) {
+        emit countChanged();
+    }
+}
 
-    emit countChanged();
+void BaseFilterModel::refineMapping()
+{
+    std::vector<int> removeIndices;
+
+    // Test if any of the current items should now be excluded
+    for (auto begin = mapping_.begin(), it = begin, end = mapping_.end(); it != end; ++it) {
+        if (!includeItem(*it)) {
+            removeIndices.push_back(it - begin);
+        }
+    }
+
+    if (!removeIndices.empty()) {
+        std::reverse(removeIndices.begin(), removeIndices.end());
+        for (auto it = removeIndices.cbegin(), end = removeIndices.cend(); it != end; ) {
+            auto rangeLast = it, rangeFirst = rangeLast;
+            for (auto next = it + 1; next != end; ++next) {
+                if (*next == (*rangeFirst - 1)) {
+                    rangeFirst = next;
+                } else {
+                    break;
+                }
+            }
+
+            // Remove this range
+            int removeIndex = *rangeFirst;
+            int removeCount = (*rangeLast - *rangeFirst + 1);
+            beginRemoveRows(QModelIndex(), removeIndex, removeIndex + removeCount - 1);
+            mapping_.erase(mapping_.begin() + removeIndex, mapping_.begin() + removeIndex + removeCount);
+            itemsRemoved(removeIndex, removeCount);
+            endRemoveRows();
+
+            it += removeCount;
+        }
+
+        emit countChanged();
+    }
+}
+
+void BaseFilterModel::unrefineMapping()
+{
+    std::vector<std::pair<int, std::vector<int>>> insertIndices;
+
+    // Test if any of the currently excluded items should now be included
+    std::vector<int> include;
+    int lastIndex = -1;
+    for (auto begin = mapping_.begin(), it = begin, end = mapping_.end(); it != end; ++it) {
+        const int index(*it);
+        if (index != lastIndex + 1) {
+            for (int sourceRow = lastIndex + 1; sourceRow < index; ++sourceRow) {
+                if (includeItem(sourceRow)) {
+                    include.push_back(sourceRow);
+                }
+            }
+            if (!include.empty()) {
+                insertIndices.push_back(std::make_pair((it - begin), include));
+                include.clear();
+            }
+        }
+        lastIndex = index;
+    }
+
+    const int lastSourceRow = model_->rowCount() - 1;
+    if (lastIndex < lastSourceRow) {
+        for (int sourceRow = lastIndex + 1; sourceRow <= lastSourceRow; ++sourceRow) {
+            if (includeItem(sourceRow)) {
+                include.push_back(sourceRow);
+            }
+        }
+        if (!include.empty()) {
+            insertIndices.push_back(std::make_pair(mapping_.size(), include));
+        }
+    }
+
+    if (!insertIndices.empty()) {
+        std::reverse(insertIndices.begin(), insertIndices.end());
+        for (auto it = insertIndices.cbegin(), end = insertIndices.cend(); it != end; ++it) {
+            const int insertIndex = it->first;
+            const std::vector<int> &insertItems = it->second;
+            const int insertCount = insertItems.size();
+
+            beginInsertRows(QModelIndex(), insertIndex, insertIndex + insertCount - 1);
+            mapping_.insert(mapping_.begin() + insertIndex, insertItems.cbegin(), insertItems.cend());
+            itemsInserted(insertIndex, insertCount);
+            endInsertRows();
+        }
+
+        emit countChanged();
+    }
 }
 
 int BaseFilterModel::sourceRow(int row) const
 {
     return mapping_.at(row);
+}
+
+int BaseFilterModel::indexForSourceRow(int sourceRow) const
+{
+    auto it = std::lower_bound(mapping_.cbegin(), mapping_.cend(), sourceRow);
+    return (it == mapping_.end() || *it != sourceRow) ? -1 : (it - mapping_.cbegin());
 }
 
 void BaseFilterModel::setModel(QAbstractListModel *model)
@@ -278,12 +435,16 @@ void BaseFilterModel::setModel(QAbstractListModel *model)
         disconnect(model_);
     }
 
+    sourceItemsCleared();
+
     modelPopulated_ = QMetaProperty();
+    objectGet_ = QMetaMethod();
     populated_ = false;
     roles_.clear();
     mapping_.clear();
-    model_ = model;
+    itemsCleared();
 
+    model_ = model;
     if (model_) {
         connect(model_, &QAbstractListModel::modelReset, this, &BaseFilterModel::sourceModelReset);
         connect(model_, &QAbstractListModel::rowsInserted, this, &BaseFilterModel::sourceRowsInserted);
@@ -306,10 +467,81 @@ void BaseFilterModel::setModel(QAbstractListModel *model)
             connect(model_, modelPopulated_.notifySignal(), this, handler);
         }
 
+        objectGet_ = mo->method(mo->indexOfMethod("get(int)"));
+
         if (!modelPopulated_.isValid() || modelPopulated_.read(model_).toBool()) {
             populateModel();
             populated_ = true;
         }
     }
 }
+
+QVariant BaseFilterModel::getSourceValue(int sourceRow, int role) const
+{
+    return model_->data(model_->index(sourceRow, 0), role);
+}
+
+QVariant BaseFilterModel::getSourceValue(int sourceRow, const QMetaProperty &property) const
+{
+    QObject *obj = 0;
+    if (objectGet_.isValid() && objectGet_.invoke(model_, Q_RETURN_ARG(QObject*, obj), Q_ARG(int, sourceRow))) {
+        if (obj)
+            return property.read(obj);
+    }
+    return QVariant();
+}
+
+int BaseFilterModel::findRole(const QString &roleName) const
+{
+    if (model_) {
+        const QHash<int, QByteArray> &roles = model_->roleNames();
+        for (auto it = roles.cbegin(), end = roles.cend(); it != end; ++it) {
+            if (it.value() == roleName) {
+                return it.key();
+            }
+        }
+    }
+
+    qWarning() << "No matching role in model:" << roleName;
+    return -1;
+}
+
+QMetaProperty BaseFilterModel::findProperty(const QByteArray &propertyName) const
+{
+    QMetaProperty property;
+
+    if (model_ && model_->rowCount() > 0) {
+        if (objectGet_.isValid()) {
+            QObject *obj;
+            if (objectGet_.invoke(model_, Q_RETURN_ARG(QObject*, obj), Q_ARG(int, 0))) {
+                if (obj) {
+                    const QMetaObject *mo(obj->metaObject());
+                    property = mo->property(mo->indexOfProperty(propertyName));
+                    if (!property.isValid()) {
+                        qWarning() << "No matching property in object:" << obj << propertyName;
+                    }
+                } else {
+                    qWarning() << "Could not retrieve valid object:" << model_;
+                }
+            } else {
+                qWarning() << "Could not invoke get:" << model_;
+            }
+        } else {
+            qWarning() << "No object get function in model:" << model_;
+        }
+    }
+
+    return property;
+}
+
+void BaseFilterModel::sourceItemsInserted(int, int) {}
+void BaseFilterModel::itemsInserted(int, int) {}
+void BaseFilterModel::sourceItemsMoved(int, int, int) {}
+void BaseFilterModel::itemsMoved(int, int, int) {}
+void BaseFilterModel::sourceItemsRemoved(int, int) {}
+void BaseFilterModel::itemsRemoved(int, int) {}
+void BaseFilterModel::sourceItemsChanged(int, int) {}
+void BaseFilterModel::itemsChanged(int, int) {}
+void BaseFilterModel::sourceItemsCleared() {}
+void BaseFilterModel::itemsCleared() {}
 

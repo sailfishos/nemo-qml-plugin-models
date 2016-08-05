@@ -5,6 +5,9 @@
            <case name="FilterModel">
                <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_filtermodel.qml</step>
            </case>
+           <case name="SearchModel">
+               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_searchmodel.qml</step>
+           </case>
        </set>
    </suite>
 </testdefinition>
