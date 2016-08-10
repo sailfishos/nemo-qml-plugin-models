@@ -40,38 +40,66 @@ Item {
     ListModel {
         id: baseModel
 
+        ListElement {
+            order: 1
+            name: 'Alice'
+            gender: 'female'
+        }
+        ListElement {
+            order: 2
+            name: 'Bob'
+            gender: 'male'
+        }
+        ListElement {
+            order: 3
+            name: 'Charlie'
+            gender: 'male'
+        }
+        ListElement {
+            order: 4
+            name: 'Debbie'
+            gender: 'female'
+        }
+        ListElement {
+            order: 5
+            name: 'Eddie'
+            gender: 'male'
+        }
+    }
+
+    Component {
+        id: item
+
+        QtObject {
+            property string name
+            property var pets
+        }
+    }
+
+    ObjectListModel {
+        id: objectListModel
+
         Component.onCompleted: {
-            // Populate dynamically to permit list values
-            append({
-                order: 1,
+            appendItem(item.createObject(this, {
                 name: 'Alice',
-                gender: 'female',
                 pets: [ 'cat', 'dog', 'goldfish' ]
-            })
-            append({
-                order: 2,
+            }))
+            appendItem(item.createObject(this, {
                 name: 'Bob',
-                gender: 'male',
                 pets: []
-            })
-            append({
-                order: 3,
+            }))
+            appendItem(item.createObject(this, {
                 name: 'Charlie',
-                gender: 'male',
                 pets: [ 'dog', 'hamster' ]
-            })
-            append({
-                order: 4,
+            }))
+            appendItem(item.createObject(this, {
                 name: 'Debbie',
-                gender: 'female',
                 pets: [ 'cat' ]
-            })
-            append({
-                order: 5,
+            }))
+            appendItem(item.createObject(this, {
                 name: 'Eddie',
-                gender: 'male',
                 pets: [ 'cat', 'iguana' ]
-            })
+            }))
         }
     }
 
@@ -108,8 +136,16 @@ Item {
         }
     }
 
+    Repeater {
+        id: objectRepeater
+
+        delegate: Item {
+            property string nameValue: object.name
+        }
+    }
+
     resources: TestCase {
-        name: "FileModel"
+        name: "FilterModel"
 
         function init() {
         }
@@ -213,25 +249,38 @@ Item {
             compare(repeater.itemAt(0).nameValue, 'Alice')
             compare(repeater.itemAt(1).nameValue, 'Bob')
 
-            /* TODO: Does not work with ListElement members...
-            filterModel.filters = [{ 'role': 'pets', 'comparator': 'contains', 'value': 'cat' }]
-            compare(repeater.count, 3)
-            compare(repeater.itemAt(0).nameValue, 'Alice')
-            compare(repeater.itemAt(2).nameValue, 'Eddie')
-
-            filterModel.filters = [{ 'role': 'pets', 'comparator': 'contains', 'value': 'dog' }]
-            compare(repeater.count, 3)
-            compare(repeater.itemAt(0).nameValue, 'Alice')
-            compare(repeater.itemAt(2).nameValue, 'Charlie')
-
-            filterModel.filters = [{ 'role': 'pets', 'comparator': '!contains', 'value': 'goldfish' }]
-            compare(repeater.count, 4)
-            compare(repeater.itemAt(0).nameValue, 'Bob')
-            compare(repeater.itemAt(3).nameValue, 'Eddie')
-            */
-
             filterModel.filters = []
             compare(repeater.count, 5)
+
+            repeater.model = null
+            compare(repeater.count, 0)
+
+            filterModel.filters = []
+            filterModel.sourceModel = objectListModel
+
+            objectRepeater.model = filterModel
+            compare(objectRepeater.count, 5)
+
+            filterModel.filters = [{ 'property': 'pets', 'comparator': 'contains', 'value': 'cat' }]
+            compare(objectRepeater.count, 3)
+            compare(objectRepeater.itemAt(0).nameValue, 'Alice')
+            compare(objectRepeater.itemAt(2).nameValue, 'Eddie')
+
+            filterModel.filters = [{ 'property': 'pets', 'comparator': 'contains', 'value': 'dog' }]
+            compare(objectRepeater.count, 2)
+            compare(objectRepeater.itemAt(0).nameValue, 'Alice')
+            compare(objectRepeater.itemAt(1).nameValue, 'Charlie')
+
+            filterModel.filters = [{ 'property': 'pets', 'comparator': '!contains', 'value': 'goldfish' }]
+            compare(objectRepeater.count, 4)
+            compare(objectRepeater.itemAt(0).nameValue, 'Bob')
+            compare(objectRepeater.itemAt(3).nameValue, 'Eddie')
+
+            objectRepeater.model = null
+            compare(objectRepeater.count, 0)
+
+            filterModel.sourceModel = null
+            filterModel.filters = []
         }
 
         function test_d_multi_filtered() {

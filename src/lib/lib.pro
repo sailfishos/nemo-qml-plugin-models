@@ -3,15 +3,21 @@ TARGET = nemomodels-qt5
 
 CONFIG += create_pc create_prl link_pkgconfig
 
+QT += qml
+
 PKGCONFIG += mlocale5
+
+INCLUDEPATH *= ../3rdparty
 
 SOURCES += \
     basefiltermodel.cpp \
     filtermodel.cpp \
+    objectlistmodel.cpp \
     searchmodel.cpp
 HEADERS += \
     basefiltermodel.h \
     filtermodel.h \
+    objectlistmodel.h \
     searchmodel.h
 
 target.path = $$[QT_INSTALL_LIBS]
@@ -21,6 +27,7 @@ headers.path = /usr/include/$$TARGET
 headers.files =\
     basefiltermodel.h \
     filtermodel.h \
+    objectlistmodel.h \
     searchmodel.h
 
 QMAKE_PKGCONFIG_NAME = lib$$TARGET
