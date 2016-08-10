@@ -236,10 +236,10 @@ bool FilterModel::passesFilter(int sourceRow, const FilterData &filter) const
     } else {
         auto testElement = [&filter, &re](const QVariant &element) -> bool {
             if (filter.comparator_ == FilterModel::ElementEqual) {
-                if ((element == filter.value_) != filter.negate_)
+                if (element == filter.value_)
                     return true;
             } else if (filter.comparator_ == FilterModel::ElementHasMatch) {
-                if (re.match(element.toString()).hasMatch() != filter.negate_)
+                if (re.match(element.toString()).hasMatch())
                     return true;
             }
             return false;
@@ -253,7 +253,7 @@ bool FilterModel::passesFilter(int sourceRow, const FilterData &filter) const
                 if (testElement(*it))
                     break;
             }
-            if (it == end) {
+            if ((it == end) != filter.negate_) {
                 return false;
             }
         } else if (value.canConvert<QVariantList>()) {
@@ -263,7 +263,7 @@ bool FilterModel::passesFilter(int sourceRow, const FilterData &filter) const
                 if (testElement(*it))
                     break;
             }
-            if (it == end) {
+            if ((it == end) != filter.negate_) {
                 return false;
             }
         } else if (value.canConvert<QObject *>()) {
