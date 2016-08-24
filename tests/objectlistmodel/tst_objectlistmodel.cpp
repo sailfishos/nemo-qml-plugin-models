@@ -34,6 +34,9 @@
 
 #include <QtTest/QtTest>
 #include <QObject>
+#include <QQmlComponent>
+#include <QQmlContext>
+#include <QQmlEngine>
 
 class tst_ObjectListModel : public QObject
 {
@@ -49,6 +52,8 @@ private slots:
     void testMove();
     void testChanged();
     void testSynchronization();
+    void testAutomaticRoles();
+    void testSimpleExport();
 };
 
 void tst_ObjectListModel::init()
@@ -73,11 +78,11 @@ QString objectName(const QObject *object)
 
 void tst_ObjectListModel::testPopulation()
 {
-    ObjectListModel emptyModel(0);
+    ObjectListModel emptyModel;
     QCOMPARE(emptyModel.populated(), true);
     QCOMPARE(emptyModel.count(), 0);
 
-    ObjectListModel model(0, false);
+    ObjectListModel model(0, false, false);
     QCOMPARE(model.populated(), false);
     QCOMPARE(model.count(), 0);
 
@@ -520,6 +525,118 @@ void tst_ObjectListModel::testSynchronization()
     QCOMPARE(qvariant_cast<int>(rowsRemovedSpy.at(0).at(2)), 2);
 
     qDeleteAll(objects);
+}
+
+void tst_ObjectListModel::testAutomaticRoles()
+{
+    QObject objA;
+    objA.setObjectName(QString("objA"));
+    objA.setProperty("family", QVariant::fromValue(QString("Istiophoridae")));
+    objA.setProperty("genus", QVariant::fromValue(QString("Istiophorus Lacépède")));
+    objA.setProperty("species", QVariant::fromValue(QString("Istiophorus albicans")));
+
+    ObjectListModel model(0, true, true);
+
+    QCOMPARE(model.automaticRoles(), true);
+    QCOMPARE(model.populated(), true);
+    QCOMPARE(model.count(), 0);
+    QCOMPARE(model.roleNames().count(), 1);
+    QCOMPARE(model.roleNames().values().contains(QByteArray("object")), true);
+
+    model.appendItem(&objA);
+    QCOMPARE(model.populated(), true);
+    QCOMPARE(model.count(), 1);
+
+    const QHash<int, QByteArray> roles(model.roleNames());
+    QCOMPARE(roles.count(), 5);
+    QCOMPARE(roles.values().contains(QByteArray("object")), true);
+    QCOMPARE(roles.values().contains(QByteArray("objectName")), true);
+    QCOMPARE(roles.values().contains(QByteArray("family")), true);
+    QCOMPARE(roles.values().contains(QByteArray("genus")), true);
+    QCOMPARE(roles.values().contains(QByteArray("species")), true);
+
+    const QModelIndex firstIndex(model.index(0, 0));
+    QCOMPARE(model.data(firstIndex, roles.key(QByteArray("objectName"))), QVariant::fromValue(QString("objA")));
+    QCOMPARE(model.data(firstIndex, roles.key(QByteArray("family"))), QVariant::fromValue(QString("Istiophoridae")));
+    QCOMPARE(model.data(firstIndex, roles.key(QByteArray("genus"))), QVariant::fromValue(QString("Istiophorus Lacépède")));
+    QCOMPARE(model.data(firstIndex, roles.key(QByteArray("species"))), QVariant::fromValue(QString("Istiophorus albicans")));
+
+    QObject objB;
+    objB.setObjectName(QString("objB"));
+    objB.setProperty("family", QVariant::fromValue(QString("Chlamyphoridae")));
+    objB.setProperty("genus", QVariant::fromValue(QString("Chlamyphorus Harlan")));
+    objB.setProperty("species", QVariant::fromValue(QString("Chlamyphorus truncatus")));
+
+    model.appendItem(&objB);
+    QCOMPARE(model.populated(), true);
+    QCOMPARE(model.count(), 2);
+    QCOMPARE(roles.count(), 5);
+
+    const QModelIndex secondIndex(model.index(1, 0));
+    QCOMPARE(model.data(secondIndex, roles.key(QByteArray("objectName"))), QVariant::fromValue(QString("objB")));
+    QCOMPARE(model.data(secondIndex, roles.key(QByteArray("family"))), QVariant::fromValue(QString("Chlamyphoridae")));
+    QCOMPARE(model.data(secondIndex, roles.key(QByteArray("genus"))), QVariant::fromValue(QString("Chlamyphorus Harlan")));
+    QCOMPARE(model.data(secondIndex, roles.key(QByteArray("species"))), QVariant::fromValue(QString("Chlamyphorus truncatus")));
+}
+
+class TestObject : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QString family READ family CONSTANT)
+    Q_PROPERTY(QString genus READ genus CONSTANT)
+    Q_PROPERTY(QString species READ species CONSTANT)
+
+public:
+    TestObject(const QString &family, const QString &genus, const QString &species)
+        : QObject(0)
+        , m_family(family)
+        , m_genus(genus)
+        , m_species(species)
+    {
+    }
+
+    QString family() const { return m_family; }
+    QString genus() const { return m_genus; }
+    QString species() const { return m_species; }
+
+private:
+    QString m_family;
+    QString m_genus;
+    QString m_species;
+};
+
+void tst_ObjectListModel::testSimpleExport()
+{
+    ObjectListModel model(0, true, true);
+
+    model.appendItem(new TestObject(QString("Istiophoridae"), QString("Istiophorus Lacépède"), QString("Istiophorus albicans")));
+    model.appendItem(new TestObject(QString("Chlamyphoridae"), QString("Chlamyphorus Harlan"), QString("Chlamyphorus truncatus")));
+
+    QQmlEngine engine;
+    engine.rootContext()->setContextProperty("objectListModel", &model);
+
+    QQmlComponent component(&engine);
+    component.setData("\
+import QtQuick 2.0\n\
+import QtQml 2.2\n\
+Item {\n\
+    id: root\n\
+    property var result: []\n\
+    Instantiator {\n\
+        model: objectListModel\n\
+        delegate: QtObject {\n\
+            Component.onCompleted: root.result.push(model.family + ',' + model.genus + ',' + model.species)\n\
+        }\n\
+    }\n\
+}", QUrl());
+
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(object != 0);
+
+    const QVariantList result(object->property("result").value<QVariantList>());
+    QCOMPARE(result.count(), 2);
+    QCOMPARE(result.at(0).toString(), QString("Istiophoridae,Istiophorus Lacépède,Istiophorus albicans"));
+    QCOMPARE(result.at(1).toString(), QString("Chlamyphoridae,Chlamyphorus Harlan,Chlamyphorus truncatus"));
 }
 
 QTEST_MAIN(tst_ObjectListModel)

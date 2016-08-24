@@ -1,6 +1,6 @@
 TARGET = tst_objectlistmodel
 
-QT += testlib
+QT += testlib qml
 
 INCLUDEPATH += \
     ../../src/lib \

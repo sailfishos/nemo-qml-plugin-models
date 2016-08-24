@@ -34,12 +34,55 @@
 #include "synchronizelists.h"
 
 #include <QQmlEngine>
+#include <QMetaProperty>
 #include <QDebug>
 
-ObjectListModel::ObjectListModel(QObject *parent, bool populated)
+namespace {
+
+QHash<int, QByteArray> rolesFromItem(QObject *item)
+{
+    QHash<int, QByteArray> rv;
+
+    int role(Qt::UserRole + 1);
+
+    const QMetaObject *mo(item->metaObject());
+    for (int i = 0, n = mo->propertyCount(); i < n; ++i) {
+        const QMetaProperty prop(mo->property(i));
+        if (prop.isReadable()) {
+            rv.insert(role, prop.name());
+            ++role;
+        }
+    }
+    for (const auto name : item->dynamicPropertyNames()) {
+        rv.insert(role, name);
+        ++role;
+    }
+
+    return rv;
+}
+
+}
+
+ObjectListModel::ObjectListModel(QObject *parent, bool automaticRoles, bool populated)
     : QAbstractListModel(parent)
+    , automaticRoles_(automaticRoles)
     , populated_(populated)
 {
+}
+
+void ObjectListModel::setAutomaticRoles(bool enabled)
+{
+    if (enabled != automaticRoles_) {
+        automaticRoles_ = enabled;
+        roles_.clear();
+
+        emit automaticRolesChanged();
+    }
+}
+
+bool ObjectListModel::automaticRoles() const
+{
+    return automaticRoles_;
 }
 
 void ObjectListModel::setPopulated(bool populated)
@@ -58,6 +101,15 @@ bool ObjectListModel::populated() const
 
 void ObjectListModel::insertItem(int index, QObject *item)
 {
+    if (automaticRoles_ && roles_.isEmpty() && items_.isEmpty()) {
+        // Special case: we need to derive the roles from this first item, and reset the model
+        roles_ = rolesFromItem(item);
+        beginResetModel();
+        items_.insert(index, item);
+        endResetModel();
+        return;
+    }
+
     beginInsertRows(QModelIndex(), index, index);
     items_.insert(index, item);
     connect(item, &QObject::destroyed, this, &ObjectListModel::objectDestroyed);
@@ -75,6 +127,13 @@ void ObjectListModel::appendItem(QObject *item)
 void ObjectListModel::appendItems(const QList<QObject *> &items)
 {
     if (!items.isEmpty()) {
+        if (automaticRoles_ && roles_.isEmpty() && items_.isEmpty()) {
+            // Special case: we need to derive the roles from the first item
+            insertItem(0, items.at(0));
+            appendItems(items.mid(1));
+            return;
+        }
+
         const int index(items_.count());
         beginInsertRows(QModelIndex(), index, (index + items.count() - 1));
         for (QObject *item : items) {
@@ -227,6 +286,9 @@ int ObjectListModel::rowCount(const QModelIndex &parent) const
 QHash<int, QByteArray> ObjectListModel::roleNames() const
 {
     QHash<int, QByteArray> rv;
+    if (automaticRoles_) {
+        rv = roles_;
+    }
     rv.insert(Qt::UserRole, "object");
     return rv;
 }
@@ -236,10 +298,20 @@ QVariant ObjectListModel::data(const QModelIndex &index, int role) const
     if (index.parent().isValid())
         return QVariant();
 
-    if (role == Qt::UserRole) {
+    if (role >= Qt::UserRole) {
         const int row(index.row());
-        if (row >= 0 && row < items_.size())
-            return QVariant::fromValue(items_.at(row));
+        if (row >= 0 && row < items_.size()) {
+            QObject *item(items_.at(row));
+            if (role == Qt::UserRole)
+                return QVariant::fromValue(item);
+
+            if (automaticRoles_) {
+                QHash<int, QByteArray>::const_iterator it = roles_.find(role);
+                if (it != roles_.end()) {
+                    return item->property(*it);
+                }
+            }
+        }
     }
 
     return QVariant();

@@ -38,11 +38,15 @@
 class Q_DECL_EXPORT ObjectListModel : public QAbstractListModel
 {
     Q_OBJECT
+    Q_PROPERTY(bool automaticRoles READ automaticRoles WRITE setAutomaticRoles NOTIFY automaticRolesChanged)
     Q_PROPERTY(bool populated READ populated WRITE setPopulated NOTIFY populatedChanged)
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
-    explicit ObjectListModel(QObject *parent = 0, bool populated = true);
+    explicit ObjectListModel(QObject *parent = 0, bool automaticRoles = false, bool populated = true);
+
+    void setAutomaticRoles(bool enabled);
+    bool automaticRoles() const;
 
     void setPopulated(bool populated);
     bool populated() const;
@@ -84,13 +88,16 @@ private slots:
     void objectDestroyed();
 
 signals:
+    void automaticRolesChanged();
     void populatedChanged();
     void countChanged();
     void itemAdded(QObject *item);
     void itemRemoved(QObject *item);
 
 private:
+    bool automaticRoles_;
     bool populated_;
+    QHash<int, QByteArray> roles_;
     QList<QObject*> items_;
     QList<QObject*> insertions_;
     QList<QObject*> removals_;
