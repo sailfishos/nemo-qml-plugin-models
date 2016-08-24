@@ -2,11 +2,17 @@
 <testdefinition version="1.0">
    <suite name="nemo-qml-plugin-models-qt5-tests" domain="mw">
        <set name="unit-tests" feature="nemo-qml-plugin-models-qt5">
+           <case name="tst_objectlistmodel">
+               <step>/opt/tests/nemo-qml-plugins/models/tst_objectlistmodel</step>
+           </case>
            <case name="FilterModel">
                <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_filtermodel.qml</step>
            </case>
            <case name="SearchModel">
                <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_searchmodel.qml</step>
+           </case>
+           <case name="ObjectListModel">
+               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_objectlistmodel.qml</step>
            </case>
        </set>
    </suite>

@@ -40,38 +40,66 @@ Item {
     ListModel {
         id: baseModel
 
+        ListElement {
+            order: 1
+            name: 'Alice'
+            gender: 'female'
+        }
+        ListElement {
+            order: 2
+            name: 'Andy'
+            gender: 'male'
+        }
+        ListElement {
+            order: 3
+            name: 'Antonio'
+            gender: 'male'
+        }
+        ListElement {
+            order: 4
+            name: 'Antti'
+            gender: 'male'
+        }
+        ListElement {
+            order: 5
+            name: 'Bob'
+            gender: 'male'
+        }
+    }
+
+    Component {
+        id: item
+
+        QtObject {
+            property string name
+            property var pets
+        }
+    }
+
+    ObjectListModel {
+        id: objectListModel
+
         Component.onCompleted: {
-            // Populate dynamically to permit list values
-            append({
-                order: 1,
+            appendItem(item.createObject(this, {
                 name: 'Alice',
-                gender: 'female',
                 pets: [ 'cat', 'dog', 'goldfish' ]
-            })
-            append({
-                order: 2,
+            }))
+            appendItem(item.createObject(this, {
                 name: 'Andy',
-                gender: 'male',
                 pets: []
-            })
-            append({
-                order: 3,
+            }))
+            appendItem(item.createObject(this, {
                 name: 'Antonio',
-                gender: 'male',
                 pets: [ 'dog', 'hamster' ]
-            })
-            append({
-                order: 4,
+            }))
+            appendItem(item.createObject(this, {
                 name: 'Antti',
-                gender: 'male',
                 pets: [ 'cat' ]
-            })
-            append({
-                order: 5,
+            }))
+            appendItem(item.createObject(this, {
                 name: 'Bob',
-                gender: 'male',
                 pets: [ 'cat', 'iguana' ]
-            })
+            }))
         }
     }
 
@@ -223,8 +251,16 @@ Item {
         }
     }
 
+    Repeater {
+        id: objectRepeater
+
+        delegate: Item {
+            property string nameValue: object.name
+        }
+    }
+
     resources: TestCase {
-        name: "FileModel"
+        name: "SearchModel"
 
         function init() {
         }
@@ -347,9 +383,6 @@ Item {
             searchModel.matchType = SearchModel.MatchBeginning
             compare(repeater.count, 0)
 
-            /* TODO: Does not work with ListElement members...
-            */
-
             repeater.model = null
 
             searchModel.searchRoles = [ 'order' ]
@@ -363,6 +396,40 @@ Item {
 
             searchModel.pattern = 'obs'
             compare(repeater.count, 1)
+
+            searchModel.pattern = ''
+            searchModel.searchRoles = []
+            searchModel.searchProperties = [ 'pets' ]
+            searchModel.sourceModel = objectListModel
+
+            objectRepeater.model = searchModel
+            compare(objectRepeater.count, 5)
+
+            searchModel.pattern = 'ca'
+            compare(objectRepeater.count, 3)
+            compare(objectRepeater.itemAt(0).nameValue, 'Alice')
+            compare(objectRepeater.itemAt(2).nameValue, 'Bob')
+
+            searchModel.pattern = 'dog'
+            compare(objectRepeater.count, 2)
+            compare(objectRepeater.itemAt(0).nameValue, 'Alice')
+            compare(objectRepeater.itemAt(1).nameValue, 'Antonio')
+
+            searchModel.pattern = 'ster'
+            compare(objectRepeater.count, 0)
+
+            searchModel.matchType = SearchModel.MatchAnywhere
+            compare(objectRepeater.count, 1)
+            compare(objectRepeater.itemAt(0).nameValue, 'Antonio')
+
+            searchModel.matchType = SearchModel.MatchBeginning
+            compare(objectRepeater.count, 0)
+
+            objectRepeater.model = null
+            compare(objectRepeater.count, 0)
+
+            searchModel.sourceModel = null
+            searchModel.searchProperties = []
         }
 
         function test_d_multi_search() {
@@ -370,6 +437,8 @@ Item {
             compare(repeater.count, 0)
 
             searchModel.pattern = ''
+            searchModel.searchRoles = []
+            searchModel.searchProperties = []
             searchModel.sourceModel = baseModel
             compare(searchModel.populated, true)
             compare(searchModel.count, 5)
