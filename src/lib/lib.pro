@@ -11,11 +11,13 @@ INCLUDEPATH *= ../3rdparty
 
 SOURCES += \
     basefiltermodel.cpp \
+    compositemodel.cpp \
     filtermodel.cpp \
     objectlistmodel.cpp \
     searchmodel.cpp
 HEADERS += \
     basefiltermodel.h \
+    compositemodel.h \
     filtermodel.h \
     objectlistmodel.h \
     searchmodel.h
@@ -26,6 +28,7 @@ pkgconfig.path = $$target.path/pkgconfig
 headers.path = /usr/include/$$TARGET
 headers.files =\
     basefiltermodel.h \
+    compositemodel.h \
     filtermodel.h \
     objectlistmodel.h \
     searchmodel.h
