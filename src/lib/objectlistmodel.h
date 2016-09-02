@@ -34,6 +34,7 @@
 #define OBJECTLISTMODEL_H
 
 #include <QAbstractListModel>
+#include <QVariantMap>
 
 class Q_DECL_EXPORT ObjectListModel : public QAbstractListModel
 {
@@ -70,8 +71,16 @@ public:
     Q_INVOKABLE void clear();
     void deleteAll();
 
-    Q_INVOKABLE QObject* get(int index);
+    Q_INVOKABLE QObject *get(int index) const;
     Q_INVOKABLE int indexOf(QObject *item) const;
+
+    template<typename DerivedType>
+    DerivedType *get(int index) const { return qobject_cast<DerivedType *>(get(index)); }
+
+    QVariant itemRole(const QObject *item, int role) const;
+    QVariantMap itemRoles(const QObject *item) const;
+
+    bool updateItem(QObject *item, const QVariantMap &roles);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QHash<int, QByteArray> roleNames() const override;
