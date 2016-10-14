@@ -54,6 +54,8 @@ private slots:
     void testSynchronization();
     void testAutomaticRoles();
     void testSimpleExport();
+    void testRoleMap();
+    void testUpdate();
 };
 
 void tst_ObjectListModel::init()
@@ -540,16 +542,18 @@ void tst_ObjectListModel::testAutomaticRoles()
     QCOMPARE(model.automaticRoles(), true);
     QCOMPARE(model.populated(), true);
     QCOMPARE(model.count(), 0);
-    QCOMPARE(model.roleNames().count(), 1);
+    QCOMPARE(model.roleNames().count(), 2);
     QCOMPARE(model.roleNames().values().contains(QByteArray("object")), true);
+    QCOMPARE(model.roleNames().values().contains(QByteArray("roles")), true);
 
     model.appendItem(&objA);
     QCOMPARE(model.populated(), true);
     QCOMPARE(model.count(), 1);
 
     const QHash<int, QByteArray> roles(model.roleNames());
-    QCOMPARE(roles.count(), 5);
+    QCOMPARE(roles.count(), 6);
     QCOMPARE(roles.values().contains(QByteArray("object")), true);
+    QCOMPARE(roles.values().contains(QByteArray("roles")), true);
     QCOMPARE(roles.values().contains(QByteArray("objectName")), true);
     QCOMPARE(roles.values().contains(QByteArray("family")), true);
     QCOMPARE(roles.values().contains(QByteArray("genus")), true);
@@ -570,7 +574,7 @@ void tst_ObjectListModel::testAutomaticRoles()
     model.appendItem(&objB);
     QCOMPARE(model.populated(), true);
     QCOMPARE(model.count(), 2);
-    QCOMPARE(roles.count(), 5);
+    QCOMPARE(roles.count(), 6);
 
     const QModelIndex secondIndex(model.index(1, 0));
     QCOMPARE(model.data(secondIndex, roles.key(QByteArray("objectName"))), QVariant::fromValue(QString("objB")));
@@ -585,6 +589,7 @@ class TestObject : public QObject
     Q_PROPERTY(QString family READ family CONSTANT)
     Q_PROPERTY(QString genus READ genus CONSTANT)
     Q_PROPERTY(QString species READ species CONSTANT)
+    Q_PROPERTY(QString commonName READ commonName WRITE setCommonName NOTIFY commonNameChanged)
 
 public:
     TestObject(const QString &family, const QString &genus, const QString &species)
@@ -599,10 +604,22 @@ public:
     QString genus() const { return m_genus; }
     QString species() const { return m_species; }
 
+    QString commonName() const { return m_common; }
+    void setCommonName(const QString &name) {
+        if (m_common != name) {
+            m_common = name;
+            emit commonNameChanged();
+        }
+    }
+
+signals:
+    void commonNameChanged();
+
 private:
     QString m_family;
     QString m_genus;
     QString m_species;
+    QString m_common;
 };
 
 void tst_ObjectListModel::testSimpleExport()
@@ -637,6 +654,73 @@ Item {\n\
     QCOMPARE(result.count(), 2);
     QCOMPARE(result.at(0).toString(), QString("Istiophoridae,Istiophorus Lacépède,Istiophorus albicans"));
     QCOMPARE(result.at(1).toString(), QString("Chlamyphoridae,Chlamyphorus Harlan,Chlamyphorus truncatus"));
+
+    model.deleteAll();
+}
+
+void tst_ObjectListModel::testRoleMap()
+{
+    ObjectListModel model(0, true, true);
+
+    model.appendItem(new TestObject(QString("Istiophoridae"), QString("Istiophorus Lacépède"), QString("Istiophorus albicans")));
+    model.appendItem(new TestObject(QString("Chlamyphoridae"), QString("Chlamyphorus Harlan"), QString("Chlamyphorus truncatus")));
+
+    QVariantMap roleMap(model.itemRoles(model.get(0)));
+    QCOMPARE(roleMap.keys().count(), 5);
+    QCOMPARE(roleMap.value("family").toString(), QString("Istiophoridae"));
+    QCOMPARE(roleMap.value("genus").toString(), QString("Istiophorus Lacépède"));
+    QCOMPARE(roleMap.value("species").toString(), QString("Istiophorus albicans"));
+    QCOMPARE(roleMap.value("commonName").toString(), QString());
+    QCOMPARE(roleMap.value("objectName").toString(), QString());
+
+    roleMap = model.itemRoles(model.get(1));
+    QCOMPARE(roleMap.keys().count(), 5);
+    QCOMPARE(roleMap.value("family").toString(), QString("Chlamyphoridae"));
+    QCOMPARE(roleMap.value("genus").toString(), QString("Chlamyphorus Harlan"));
+    QCOMPARE(roleMap.value("species").toString(), QString("Chlamyphorus truncatus"));
+    QCOMPARE(roleMap.value("commonName").toString(), QString());
+    QCOMPARE(roleMap.value("objectName").toString(), QString());
+
+    model.deleteAll();
+}
+
+void tst_ObjectListModel::testUpdate()
+{
+    ObjectListModel model(0, true, true);
+
+    TestObject to(QString("Istiophoridae"), QString("Istiophorus Lacépède"), QString("Istiophorus albicans"));
+    to.setCommonName("Sailfish");
+    to.setProperty("dynamic", QVariant::fromValue(2.0));
+
+    model.appendItem(&to);
+
+    QVariantMap roleMap(model.itemRoles(model.get(0)));
+    QCOMPARE(roleMap.keys().count(), 6);
+    QCOMPARE(roleMap.value("family").toString(), QString("Istiophoridae"));
+    QCOMPARE(roleMap.value("genus").toString(), QString("Istiophorus Lacépède"));
+    QCOMPARE(roleMap.value("species").toString(), QString("Istiophorus albicans"));
+    QCOMPARE(roleMap.value("commonName").toString(), QString("Sailfish"));
+    QCOMPARE(roleMap.value("dynamic").toDouble(), 2.0);
+    QCOMPARE(roleMap.value("objectName").toString(), QString());
+
+    QVariantMap newValues;
+    newValues.insert(QString("family"), QVariant::fromValue(QString("Chlamyphoridae"))); // Not writable
+    newValues.insert(QString("commonName"), QVariant::fromValue(QString("Shellfish")));
+    newValues.insert(QString("dynamic"), QVariant::fromValue(3.0));
+    newValues.insert(QString("objectName"), QVariant::fromValue(QString("Updated")));
+    newValues.insert(QString("irrelevant"), QVariant::fromValue(QString("Unused")));
+    model.updateItem(model.get(0), newValues);
+
+    roleMap = model.itemRoles(model.get(0));
+    QCOMPARE(roleMap.keys().count(), 6);
+    QCOMPARE(roleMap.value("family").toString(), QString("Istiophoridae"));
+    QCOMPARE(roleMap.value("genus").toString(), QString("Istiophorus Lacépède"));
+    QCOMPARE(roleMap.value("species").toString(), QString("Istiophorus albicans"));
+    QCOMPARE(roleMap.value("commonName").toString(), QString("Shellfish"));
+    QCOMPARE(roleMap.value("dynamic").toDouble(), 3.0);
+    QCOMPARE(roleMap.value("objectName").toString(), QString("Updated"));
+
+    model.clear();
 }
 
 QTEST_MAIN(tst_ObjectListModel)

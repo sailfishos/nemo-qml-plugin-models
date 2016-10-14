@@ -39,11 +39,17 @@
 
 namespace {
 
+enum {
+    ObjectPointerRole = Qt::UserRole,
+    RoleMapRole,
+    FirstAutomaticRole,
+};
+
 QHash<int, QByteArray> rolesFromItem(QObject *item)
 {
     QHash<int, QByteArray> rv;
 
-    int role(Qt::UserRole + 1);
+    int role(FirstAutomaticRole);
 
     const QMetaObject *mo(item->metaObject());
     for (int i = 0, n = mo->propertyCount(); i < n; ++i) {
@@ -107,13 +113,12 @@ void ObjectListModel::insertItem(int index, QObject *item)
         beginResetModel();
         items_.insert(index, item);
         endResetModel();
-        return;
+    } else {
+        beginInsertRows(QModelIndex(), index, index);
+        items_.insert(index, item);
+        connect(item, &QObject::destroyed, this, &ObjectListModel::objectDestroyed);
+        endInsertRows();
     }
-
-    beginInsertRows(QModelIndex(), index, index);
-    items_.insert(index, item);
-    connect(item, &QObject::destroyed, this, &ObjectListModel::objectDestroyed);
-    endInsertRows();
 
     emit itemAdded(item);
     emit countChanged();
@@ -259,7 +264,7 @@ void ObjectListModel::deleteAll()
     emit populatedChanged();
 }
 
-QObject* ObjectListModel::get(int index)
+QObject* ObjectListModel::get(int index) const
 {
     if (index >= 0 && index < items_.size()) {
         QObject *item(items_.at(index));
@@ -275,6 +280,67 @@ int ObjectListModel::indexOf(QObject *item) const
     return items_.indexOf(item);
 }
 
+QVariant ObjectListModel::itemRole(const QObject *item, int role) const
+{
+    QHash<int, QByteArray>::const_iterator it = roles_.find(role);
+    return it != roles_.end() ? item->property(*it) : QVariant();
+}
+
+QVariantMap ObjectListModel::itemRoles(const QObject *item) const
+{
+    QVariantMap rv;
+
+    if (automaticRoles_) {
+        for (QHash<int, QByteArray>::const_iterator it = roles_.cbegin(), end = roles_.cend(); it != end; ++it) {
+            rv.insert(QString::fromUtf8(it.value()), item->property(it.value()));
+        }
+    }
+
+    return rv;
+}
+
+bool ObjectListModel::updateItem(QObject *item, const QVariantMap &roles)
+{
+    bool rv = false;
+
+    const QMetaObject *mo(item->metaObject());
+    const QList<QByteArray> dynamicPropertyNames(item->dynamicPropertyNames());
+
+    for (QVariantMap::const_iterator it = roles.cbegin(), end = roles.cend(); it != end; ++it) {
+        const QByteArray roleName(it.key().toUtf8());
+        const QVariant &value(it.value());
+
+        if (dynamicPropertyNames.contains(roleName)) {
+            if (item->property(roleName) != value) {
+                item->setProperty(roleName, value);
+                rv = true;
+            }
+        } else {
+            int propertyIndex(mo->indexOfProperty(roleName));
+            if (propertyIndex != -1) {
+                QMetaProperty property(mo->property(propertyIndex));
+                if (property.isValid() && property.isWritable()) {
+                    if (property.read(item) != value) {
+                        property.write(item, value);
+
+                        QMetaMethod notify(property.notifySignal());
+                        if (notify.isValid()) {
+                            notify.invoke(item);
+                        }
+
+                        rv = true;
+                    }
+                    continue;
+                }
+            }
+
+            qWarning() << "Unable to update object property:" << roleName;
+        }
+    }
+
+    return rv;
+}
+
 int ObjectListModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
@@ -288,8 +354,9 @@ QHash<int, QByteArray> ObjectListModel::roleNames() const
     QHash<int, QByteArray> rv;
     if (automaticRoles_) {
         rv = roles_;
+        rv.insert(RoleMapRole, "roles");
     }
-    rv.insert(Qt::UserRole, "object");
+    rv.insert(ObjectPointerRole, "object");
     return rv;
 }
 
@@ -298,18 +365,14 @@ QVariant ObjectListModel::data(const QModelIndex &index, int role) const
     if (index.parent().isValid())
         return QVariant();
 
-    if (role >= Qt::UserRole) {
+    if (role >= ObjectPointerRole) {
         const int row(index.row());
         if (row >= 0 && row < items_.size()) {
             QObject *item(items_.at(row));
-            if (role == Qt::UserRole)
+            if (role == ObjectPointerRole) {
                 return QVariant::fromValue(item);
-
-            if (automaticRoles_) {
-                QHash<int, QByteArray>::const_iterator it = roles_.find(role);
-                if (it != roles_.end()) {
-                    return item->property(*it);
-                }
+            } else if (automaticRoles_) {
+                return role == RoleMapRole ? QVariant::fromValue(itemRoles(item)) : itemRole(item, role);
             }
         }
     }
