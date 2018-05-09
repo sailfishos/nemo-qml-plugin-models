@@ -11,11 +11,11 @@ LIBS += -L../lib -lnemomodels-qt5
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
 INSTALLS += target
 
-qmldir.files += $$_PRO_FILE_PWD_/qmldir
+qmldir.files += qmldir
 qmldir.path +=  $$target.path
 INSTALLS += qmldir
 
-qmltypes.files += $$_PRO_FILE_PWD_/plugin.qmltypes
+qmltypes.files += plugin.qmltypes
 qmltypes.path +=  $$target.path
 INSTALLS += qmltypes
 
