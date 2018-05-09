@@ -19,6 +19,9 @@ qmltypes.files += plugin.qmltypes
 qmltypes.path +=  $$target.path
 INSTALLS += qmltypes
 
+qmltypes.commands = qmlplugindump -nonrelocatable org.nemomobile.models 1.0 > $$PWD/plugins.qmltypes
+QMAKE_EXTRA_TARGETS += qmltypes
+
 SOURCES += \
     plugin.cpp
 
