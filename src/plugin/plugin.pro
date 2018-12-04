@@ -3,7 +3,7 @@ PLUGIN_IMPORT_PATH = org/nemomobile/models
 
 TEMPLATE = lib
 CONFIG += plugin
-QT += qml quick
+QT += qml
 
 INCLUDEPATH += ../lib
 LIBS += -L../lib -lnemomodels-qt5
