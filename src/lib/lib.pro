@@ -3,7 +3,9 @@ TARGET = nemomodels-qt5
 
 CONFIG += create_pc create_prl link_pkgconfig
 
-QT += qml
+QT = \
+    core \
+    qml
 
 PKGCONFIG += mlocale5
 
