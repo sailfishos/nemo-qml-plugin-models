@@ -34,6 +34,7 @@
 #include "filtermodel.h"
 #include "searchmodel.h"
 #include "objectlistmodel.h"
+#include "combinedsearchmodel.h"
 
 #include <QtGlobal>
 #include <QtQml>
@@ -55,6 +56,7 @@ public:
         qmlRegisterType<SearchModel>(uri, 1, 0, "SearchModel");
         qmlRegisterType<ObjectListModel>(uri, 1, 0, "ObjectListModel");
         qmlRegisterType<CompositeModel>(uri, 1, 0, "CompositeModel");
+        qmlRegisterType<CombinedSearchModel>(uri, 1, 0, "CombinedSearchModel");
     }
 };
 

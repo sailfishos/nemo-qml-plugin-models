@@ -38,6 +38,7 @@
 
 #include <vector>
 
+class CombinedSearchModel;
 class Q_DECL_EXPORT BaseFilterModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -65,6 +66,7 @@ signals:
     void sourceModelChanged();
     void populatedChanged();
     void countChanged();
+    void sourceModelRowsChanged();
 
 protected slots:
     void sourceModelReset();
@@ -117,6 +119,8 @@ protected:
     bool populated_;
     std::vector<int> mapping_;
     std::vector<QPair<int, QByteArray>> roles_;
+
+    friend class CombinedSearchModel;
 };
 
 #endif // BASEFILTERMODEL_H

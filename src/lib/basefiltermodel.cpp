@@ -121,6 +121,7 @@ QVariantMap BaseFilterModel::getRoles(int row, int column) const
 void BaseFilterModel::sourceModelReset()
 {
     populateModel();
+    emit sourceModelRowsChanged();
 }
 
 void BaseFilterModel::sourcePopulatedChanged()
@@ -145,19 +146,28 @@ void BaseFilterModel::sourceRowsInserted(const QModelIndex &parent, int first, i
         if (includeItem(i))
             insertItems.push_back(i);
 
-    if (insertItems.empty())
-        return;
+    // shuffle up any mapping indexes greater than first by (last-first+1)
+    const int mappingDelta = last - first + 1;
+    for (auto &mapping : mapping_) {
+        if (mapping > first) {
+            mapping += mappingDelta;
+        }
+    }
 
-    auto firstIt = std::lower_bound(mapping_.begin(), mapping_.end(), first);
-    const int insertIndex(firstIt - mapping_.begin());
-    const int insertCount(insertItems.size());
+    if (!insertItems.empty()) {
+        auto firstIt = std::lower_bound(mapping_.begin(), mapping_.end(), first);
+        const int insertIndex(firstIt - mapping_.begin());
+        const int insertCount(insertItems.size());
 
-    beginInsertRows(QModelIndex(), insertIndex, insertIndex + insertCount - 1);
-    mapping_.insert(firstIt, insertItems.cbegin(), insertItems.cend());
-    itemsInserted(insertIndex, insertCount);
-    endInsertRows();
+        beginInsertRows(QModelIndex(), insertIndex, insertIndex + insertCount - 1);
+        mapping_.insert(firstIt, insertItems.cbegin(), insertItems.cend());
+        itemsInserted(insertIndex, insertCount);
+        endInsertRows();
 
-    emit countChanged();
+        emit countChanged();
+    }
+
+    emit sourceModelRowsChanged();
 }
 
 void BaseFilterModel::sourceRowsMoved(const QModelIndex &parent, int first, int last, const QModelIndex &destination, int row)
@@ -198,6 +208,7 @@ void BaseFilterModel::sourceRowsMoved(const QModelIndex &parent, int first, int 
     itemsMoved(moveIndex, moveCount, insertIndex);
 
     endMoveRows();
+    emit sourceModelRowsChanged();
 }
 
 void BaseFilterModel::sourceRowsRemoved(const QModelIndex &parent, int first, int last)
@@ -206,29 +217,32 @@ void BaseFilterModel::sourceRowsRemoved(const QModelIndex &parent, int first, in
         return;
 
     auto firstIt = std::lower_bound(mapping_.begin(), mapping_.end(), first);
-    if (firstIt == mapping_.end())
-        return;
-
     auto lastIt = firstIt;
     for (auto end = mapping_.end(); lastIt != end; ++lastIt) {
         if (*lastIt > last)
             break;
     }
 
-    if (lastIt == firstIt)
-        return;
+    if (firstIt != mapping_.end()) {
+        sourceItemsRemoved(first, (last - first + 1));
+        const int removeIndex(firstIt - mapping_.begin());
+        const int removeCount(lastIt - firstIt);
+        beginRemoveRows(QModelIndex(), removeIndex, removeIndex + removeCount - 1);
+        mapping_.erase(firstIt, lastIt);
+        itemsRemoved(removeIndex, removeCount);
+        endRemoveRows();
+        emit countChanged();
+    }
 
-    sourceItemsRemoved(first, (last - first + 1));
+    // need to shuffle down any mapping indexes greater than first by (last-first+1)
+    const int mappingDelta = last - first + 1;
+    for (auto &mapping : mapping_) {
+        if (mapping > first) {
+            mapping -= mappingDelta;
+        }
+    }
 
-    const int removeIndex(firstIt - mapping_.begin());
-    const int removeCount(lastIt - firstIt);
-
-    beginRemoveRows(QModelIndex(), removeIndex, removeIndex + removeCount - 1);
-    mapping_.erase(firstIt, lastIt);
-    itemsRemoved(removeIndex, removeCount);
-    endRemoveRows();
-
-    emit countChanged();
+    emit sourceModelRowsChanged();
 }
 
 void BaseFilterModel::sourceDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
