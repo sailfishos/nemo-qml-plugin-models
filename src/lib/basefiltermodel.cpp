@@ -45,7 +45,7 @@ void BaseFilterModel::setSourceModel(QObject *model)
 {
     if (model != static_cast<QObject *>(model_)) {
         const bool wasPopulated(populated_);
-        setModel(qobject_cast<QAbstractListModel *>(model));
+        setModel(qobject_cast<QAbstractItemModel *>(model));
 
         if (populated_ != wasPopulated) {
             emit populatedChanged();
@@ -429,7 +429,7 @@ int BaseFilterModel::indexForSourceRow(int sourceRow) const
     return (it == mapping_.end() || *it != sourceRow) ? -1 : (it - mapping_.cbegin());
 }
 
-void BaseFilterModel::setModel(QAbstractListModel *model)
+void BaseFilterModel::setModel(QAbstractItemModel *model)
 {
     if (model_) {
         disconnect(model_);
@@ -446,12 +446,12 @@ void BaseFilterModel::setModel(QAbstractListModel *model)
 
     model_ = model;
     if (model_) {
-        connect(model_, &QAbstractListModel::modelReset, this, &BaseFilterModel::sourceModelReset);
-        connect(model_, &QAbstractListModel::rowsInserted, this, &BaseFilterModel::sourceRowsInserted);
-        connect(model_, &QAbstractListModel::rowsMoved, this, &BaseFilterModel::sourceRowsMoved);
-        connect(model_, &QAbstractListModel::rowsRemoved, this, &BaseFilterModel::sourceRowsRemoved);
-        connect(model_, &QAbstractListModel::dataChanged, this, &BaseFilterModel::sourceDataChanged);
-        connect(model_, &QAbstractListModel::layoutChanged, this, &BaseFilterModel::sourceLayoutChanged);
+        connect(model_, &QAbstractItemModel::modelReset, this, &BaseFilterModel::sourceModelReset);
+        connect(model_, &QAbstractItemModel::rowsInserted, this, &BaseFilterModel::sourceRowsInserted);
+        connect(model_, &QAbstractItemModel::rowsMoved, this, &BaseFilterModel::sourceRowsMoved);
+        connect(model_, &QAbstractItemModel::rowsRemoved, this, &BaseFilterModel::sourceRowsRemoved);
+        connect(model_, &QAbstractItemModel::dataChanged, this, &BaseFilterModel::sourceDataChanged);
+        connect(model_, &QAbstractItemModel::layoutChanged, this, &BaseFilterModel::sourceLayoutChanged);
 
         const QHash<int, QByteArray> &roles(model_->roleNames());
         roles_.reserve(roles.size());

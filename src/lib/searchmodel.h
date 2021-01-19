@@ -90,7 +90,7 @@ protected:
     std::unique_ptr<TokenList> searchTokens(int sourceRow) const;
     void searchTokensInvalidated();
 
-    void setModel(QAbstractListModel *model) override;
+    void setModel(QAbstractItemModel *model) override;
 
     void sourceItemsInserted(int insertIndex, int insertCount) override;
     void sourceItemsMoved(int moveIndex, int moveCount, int insertIndex) override;
