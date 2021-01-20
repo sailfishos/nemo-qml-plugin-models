@@ -85,7 +85,7 @@ protected:
     int sourceRow(int row) const;
     int indexForSourceRow(int sourceRow) const;
 
-    virtual void setModel(QAbstractListModel *model);
+    virtual void setModel(QAbstractItemModel *model);
 
     virtual bool filtered() const = 0;
     virtual bool includeItem(int sourceRow) const = 0;
@@ -111,7 +111,7 @@ protected:
     virtual void sourceItemsCleared();
     virtual void itemsCleared();
 
-    QAbstractListModel *model_;
+    QAbstractItemModel *model_;
     QMetaProperty modelPopulated_;
     QMetaMethod objectGet_;
     bool populated_;

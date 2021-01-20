@@ -545,7 +545,7 @@ void SearchModel::searchTokensInvalidated()
     std::fill(tokens_.begin(), tokens_.end(), std::shared_ptr<TokenList>());
 }
 
-void SearchModel::setModel(QAbstractListModel *model)
+void SearchModel::setModel(QAbstractItemModel *model)
 {
     roles_.clear();
     properties_.clear();
