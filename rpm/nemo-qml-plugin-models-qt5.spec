@@ -4,7 +4,7 @@ Summary:    Nemo QML models plugin
 Version:    0.0.0
 Release:    1
 Group:      System/Libraries
-License:    BSD
+License:    BSD and LGPLv2
 URL:        https://git.merproject.org/mer-core/nemo-qml-plugin-models
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)

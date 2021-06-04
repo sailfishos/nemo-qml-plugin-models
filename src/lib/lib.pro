@@ -16,13 +16,16 @@ SOURCES += \
     compositemodel.cpp \
     filtermodel.cpp \
     objectlistmodel.cpp \
-    searchmodel.cpp
+    searchmodel.cpp \
+    sortfiltermodel.cpp
+
 HEADERS += \
     basefiltermodel.h \
     compositemodel.h \
     filtermodel.h \
     objectlistmodel.h \
-    searchmodel.h
+    searchmodel.h \
+    sortfiltermodel.h
 
 target.path = $$[QT_INSTALL_LIBS]
 pkgconfig.files = $$TARGET.pc
