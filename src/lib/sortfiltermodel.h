@@ -18,7 +18,7 @@
  * @class SortFilterModel
  * @short Filter and sort an existing QAbstractItemModel
  */
-class SortFilterModel : public QSortFilterProxyModel
+class Q_DECL_EXPORT SortFilterModel : public QSortFilterProxyModel
 {
     Q_OBJECT
     /**
