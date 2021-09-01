@@ -6,16 +6,16 @@
                <step>/opt/tests/nemo-qml-plugins/models/tst_objectlistmodel</step>
            </case>
            <case name="FilterModel">
-               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_filtermodel.qml</step>
+               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; qmltestrunner -input tst_filtermodel.qml</step>
            </case>
            <case name="SearchModel">
-               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_searchmodel.qml</step>
+               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; qmltestrunner -input tst_searchmodel.qml</step>
            </case>
            <case name="ObjectListModel">
-               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_objectlistmodel.qml</step>
+               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; qmltestrunner -input tst_objectlistmodel.qml</step>
            </case>
            <case name="CompositeModel">
-               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_compositemodel.qml</step>
+               <step>cd /opt/tests/nemo-qml-plugins/models/auto &amp;&amp; qmltestrunner -input tst_compositemodel.qml</step>
            </case>
        </set>
    </suite>
