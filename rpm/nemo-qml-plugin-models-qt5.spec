@@ -1,11 +1,10 @@
 Name:       nemo-qml-plugin-models-qt5
 
 Summary:    Nemo QML models plugin
-Version:    0.0.0
+Version:    0.2.4
 Release:    1
-Group:      System/Libraries
-License:    BSD and LGPLv2
-URL:        https://git.merproject.org/mer-core/nemo-qml-plugin-models
+License:    BSD and LGPLv2+
+URL:        https://github.com/sailfishos/nemo-qml-plugin-models
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
@@ -19,7 +18,6 @@ BuildRequires:  pkgconfig(mlite5)
 
 %package tests
 Summary:    Nemo QML models plugin tests
-Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description tests
@@ -27,7 +25,6 @@ Requires:   %{name} = %{version}-%{release}
 
 %package devel
 Summary:    Nemo QML models library headers
-Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description devel
@@ -42,7 +39,6 @@ Requires:   %{name} = %{version}-%{release}
 make %{?_smp_mflags}
 
 %install
-rm -rf %{buildroot}
 %qmake5_install
 
 %post -p /sbin/ldconfig
@@ -51,6 +47,7 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
+%license LICENSE.BSD LICENSE.LGPL
 %{_libdir}/libnemomodels-qt5.so*
 %{_libdir}/qt5/qml/org/nemomobile/models/libnemomodels.so
 %{_libdir}/qt5/qml/org/nemomobile/models/qmldir
