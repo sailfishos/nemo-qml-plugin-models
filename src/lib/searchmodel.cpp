@@ -32,6 +32,7 @@
 
 #include "searchmodel.h"
 
+#include <QSequentialIterable>
 #include <MLocale>
 #include <MBreakIterator>
 
@@ -75,7 +76,7 @@ QMap<uint, QString> decompositionMapping()
 
 QStringList tokenize(const QString &word)
 {
-    static const QSet<QString> alphabet(mLocale.exemplarCharactersIndex().toSet());
+    static const QSet<QString> alphabet(mLocale.exemplarCharactersIndex().begin(), mLocale.exemplarCharactersIndex().end());
     static const QMap<uint, QString> decompositions(decompositionMapping());
 
     // Convert the word to canonical form
