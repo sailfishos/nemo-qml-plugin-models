@@ -99,13 +99,24 @@ void SortFilterModel::setFilterRegExp(const QString &exp)
     if (exp == filterRegExp()) {
         return;
     }
+
+#if QT_VERSION < 0x051500
+    QSortFilterProxyModel::setFilterRegExp(QRegExp(exp, Qt::CaseInsensitive));
+#else
     QSortFilterProxyModel::setFilterRegularExpression(QRegularExpression(exp, QRegularExpression::CaseInsensitiveOption));
+#endif
     Q_EMIT filterRegExpChanged(exp);
 }
 
 QString SortFilterModel::filterRegExp() const
 {
+
+#if QT_VERSION < 0x051500
+    return QSortFilterProxyModel::filterRegExp().pattern();
+#else
     return QSortFilterProxyModel::filterRegularExpression().pattern();
+#endif
+
 }
 
 void SortFilterModel::setFilterString(const QString &filterString)
