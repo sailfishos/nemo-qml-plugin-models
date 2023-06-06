@@ -34,6 +34,7 @@
 #include "filtermodel.h"
 
 #include <QRegularExpression>
+#include <QSequentialIterable>
 #include <QtDebug>
 
 namespace {
