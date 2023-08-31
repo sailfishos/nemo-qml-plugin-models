@@ -33,10 +33,11 @@
 #ifndef OBJECTLISTMODEL_H
 #define OBJECTLISTMODEL_H
 
+#include <nemomodels.h>
 #include <QAbstractListModel>
 #include <QVariantMap>
 
-class Q_DECL_EXPORT ObjectListModel : public QAbstractListModel
+class NEMO_QML_PLUGIN_MODELS_EXPORT ObjectListModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(bool automaticRoles READ automaticRoles WRITE setAutomaticRoles NOTIFY automaticRolesChanged)

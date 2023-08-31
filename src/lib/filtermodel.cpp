@@ -226,10 +226,18 @@ bool FilterModel::passesFilter(int sourceRow, const FilterData &filter) const
         if ((value == filter.value_) == filter.negate_)
             return false;
     } else if (filter.comparator_ == FilterModel::LessThan) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        if ((QVariant::compare(value, filter.value_) < 0) == filter.negate_)
+#else
         if ((value < filter.value_) == filter.negate_)
+#endif
             return false;
     } else if (filter.comparator_ == FilterModel::LessThanEqual) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        if ((QVariant::compare(value, filter.value_) <= 0) == filter.negate_)
+#else
         if ((value <= filter.value_) == filter.negate_)
+#endif
             return false;
     } else if (filter.comparator_ == FilterModel::HasMatch) {
         if (re.match(value.toString()).hasMatch() == filter.negate_)
@@ -247,7 +255,11 @@ bool FilterModel::passesFilter(int sourceRow, const FilterData &filter) const
         };
 
         // List comparisons - fail only if no element meets the criterion
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        if (static_cast<QMetaType::Type>(value.typeId()) == QMetaType::QStringList) {
+#else
         if (static_cast<QMetaType::Type>(value.type()) == QMetaType::QStringList) {
+#endif
             const QStringList elements(value.value<QStringList>());
             auto it = elements.cbegin(), end = elements.cend();
             for ( ; it != end; ++it) {

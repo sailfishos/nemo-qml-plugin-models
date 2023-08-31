@@ -222,7 +222,11 @@ QStringList toStringList(const QVariant &value)
 {
     QStringList rv;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    if (static_cast<QMetaType::Type>(value.typeId()) == QMetaType::QStringList) {
+#else
     if (static_cast<QMetaType::Type>(value.type()) == QMetaType::QStringList) {
+#endif
         rv = value.value<QStringList>();
     } else if (value.canConvert<QVariantList>()) {
         QSequentialIterable iterable = value.value<QSequentialIterable>();
@@ -269,8 +273,13 @@ QList<QStringList> patternTokens(const QString &string, Qt::CaseSensitivity case
 static const QChar *cbegin(const QString &s) { return s.cbegin(); }
 static const QChar *cend(const QString &s) { return s.cend(); }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+static const QChar *cbegin(const QStringView &r) { return r.data(); }
+static const QChar *cend(const QStringView &r) { return r.data() + r.size(); }
+#else
 static const QChar *cbegin(const QStringRef &r) { return r.data(); }
 static const QChar *cend(const QStringRef &r) { return r.data() + r.size(); }
+#endif
 
 template <typename StringType>
 bool partialMatch(const StringType &key, const QChar * const vbegin, const QChar * const vend)
@@ -329,7 +338,11 @@ bool partialMatch(const std::vector<const QString *> &tokens, const QString &val
             for (auto begin = token->cbegin(), it = begin, end = token->cend(); it != end; ) {
                 it = std::find(it, end, *vbegin);
                 if (it != end) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                    const QStringView key = QStringView(&(*it), end - it);
+#else
                     const QStringRef key(token->midRef((it - begin)));
+#endif
                     if (partialMatch(key, vbegin, vend))
                         return true;
 

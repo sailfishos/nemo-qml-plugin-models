@@ -33,10 +33,11 @@
 #ifndef COMPOSITEMODEL_H
 #define COMPOSITEMODEL_H
 
+#include <nemomodels.h>
 #include <QAbstractListModel>
 #include <QVector>
 
-class Q_DECL_EXPORT CompositeModel : public QAbstractListModel
+class NEMO_QML_PLUGIN_MODELS_EXPORT CompositeModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(bool populated READ populated NOTIFY populatedChanged)
