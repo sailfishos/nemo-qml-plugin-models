@@ -33,12 +33,14 @@
 #ifndef BASEFILTERMODEL_H
 #define BASEFILTERMODEL_H
 
+#include <nemomodels.h>
+
 #include <QAbstractListModel>
 #include <QMetaProperty>
 
 #include <vector>
 
-class Q_DECL_EXPORT BaseFilterModel : public QAbstractListModel
+class NEMO_QML_PLUGIN_MODELS_EXPORT BaseFilterModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(QObject *sourceModel READ sourceModel WRITE setSourceModel NOTIFY sourceModelChanged)

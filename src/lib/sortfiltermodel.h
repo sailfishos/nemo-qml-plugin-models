@@ -9,6 +9,7 @@
 #ifndef SORTFILTERMODEL_H
 #define SORTFILTERMODEL_H
 
+#include <nemomodels.h>
 #include <QAbstractItemModel>
 #include <QJSValue>
 #include <QSortFilterProxyModel>
@@ -18,7 +19,7 @@
  * @class SortFilterModel
  * @short Filter and sort an existing QAbstractItemModel
  */
-class Q_DECL_EXPORT SortFilterModel : public QSortFilterProxyModel
+class NEMO_QML_PLUGIN_MODELS_EXPORT SortFilterModel : public QSortFilterProxyModel
 {
     Q_OBJECT
     /**

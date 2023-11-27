@@ -33,6 +33,7 @@
 #ifndef SEARCHMODEL_H
 #define SEARCHMODEL_H
 
+#include <nemomodels.h>
 #include "basefiltermodel.h"
 
 #include <QList>
@@ -41,7 +42,7 @@
 #include <memory>
 #include <vector>
 
-class Q_DECL_EXPORT SearchModel : public BaseFilterModel
+class NEMO_QML_PLUGIN_MODELS_EXPORT SearchModel : public BaseFilterModel
 {
     Q_OBJECT
     Q_PROPERTY(QStringList searchRoles READ searchRoles WRITE setSearchRoles NOTIFY searchRolesChanged)

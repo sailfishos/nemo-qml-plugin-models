@@ -8,7 +8,7 @@ QT = \
     qml
 
 INCLUDEPATH += ../lib
-LIBS += -L../lib -lnemomodels-qt5
+LIBS += -L../lib -lnemomodels-qt$${QT_MAJOR_VERSION}
 
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
 INSTALLS += target

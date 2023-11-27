@@ -1,0 +1,9 @@
+moc_*
+*.o
+Makefile
+libnemomodels-qt*.so*
+libnemomodels.so*
+tests/objectlistmodel/tst_objectlistmodel
+.qmake.stash
+src/lib/libnemomodels-qt*.prl
+src/lib/pkgconfig/

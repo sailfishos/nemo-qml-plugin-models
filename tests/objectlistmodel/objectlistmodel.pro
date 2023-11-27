@@ -11,7 +11,7 @@ SOURCES += \
 
 LIBS += \
     -L../../src/lib \
-    -lnemomodels-qt5
+    -lnemomodels-qt$${QT_MAJOR_VERSION}
 
 target.path = /opt/tests/nemo-qml-plugins/models
 INSTALLS += target

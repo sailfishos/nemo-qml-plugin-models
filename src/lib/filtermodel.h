@@ -33,12 +33,13 @@
 #ifndef FILTERMODEL_H
 #define FILTERMODEL_H
 
+#include <nemomodels.h>
 #include "basefiltermodel.h"
 
 #include <QList>
 #include <QMetaMethod>
 
-class Q_DECL_EXPORT FilterModel : public BaseFilterModel
+class NEMO_QML_PLUGIN_MODELS_EXPORT FilterModel : public BaseFilterModel
 {
     Q_OBJECT
     Q_PROPERTY(QVariantList filters READ filters WRITE setFilters NOTIFY filtersChanged)
