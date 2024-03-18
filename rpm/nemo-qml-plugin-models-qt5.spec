@@ -51,7 +51,7 @@ make %{?_smp_mflags}
 %{_libdir}/libnemomodels-qt5.so*
 %{_libdir}/qt5/qml/org/nemomobile/models/libnemomodels.so
 %{_libdir}/qt5/qml/org/nemomobile/models/qmldir
-%{_libdir}/qt5/qml/org/nemomobile/models/plugin.qmltypes
+%{_libdir}/qt5/qml/org/nemomobile/models/plugins.qmltypes
 
 %files tests
 %defattr(-,root,root,-)
