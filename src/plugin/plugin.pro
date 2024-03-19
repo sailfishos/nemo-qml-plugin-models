@@ -13,7 +13,7 @@ LIBS += -L../lib -lnemomodels-qt$${QT_MAJOR_VERSION}
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
 INSTALLS += target
 
-qmldir.files += qmldir plugin.qmltypes
+qmldir.files += qmldir plugins.qmltypes
 qmldir.path +=  $$target.path
 INSTALLS += qmldir
 
