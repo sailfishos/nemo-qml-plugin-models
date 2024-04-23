@@ -46,19 +46,17 @@ make %{?_smp_mflags}
 %postun -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
 %license LICENSE.BSD LICENSE.LGPL
-%{_libdir}/libnemomodels-qt5.so*
+%{_libdir}/libnemomodels-qt5.so.*
 %{_libdir}/qt5/qml/org/nemomobile/models/libnemomodels.so
 %{_libdir}/qt5/qml/org/nemomobile/models/qmldir
 %{_libdir}/qt5/qml/org/nemomobile/models/plugins.qmltypes
 
 %files tests
-%defattr(-,root,root,-)
 /opt/tests/nemo-qml-plugins/models/
 
 %files devel
-%defattr(-,root,root,-)
+%{_libdir}/libnemomodels-qt5.so
 %{_includedir}/nemomodels-qt5/*
 %{_libdir}/pkgconfig/nemomodels-qt5.pc
 %{_libdir}/libnemomodels-qt5.prl
