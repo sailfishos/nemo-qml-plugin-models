@@ -35,8 +35,7 @@ Requires:   %{name} = %{version}-%{release}
 
 %build
 %qmake5 VERSION=%{version}
-
-make %{?_smp_mflags}
+%make_build
 
 %install
 %qmake5_install
@@ -53,7 +52,7 @@ make %{?_smp_mflags}
 %{_libdir}/qt5/qml/org/nemomobile/models/plugins.qmltypes
 
 %files tests
-/opt/tests/nemo-qml-plugins/models/
+/opt/tests/nemo-qml-plugin-models/
 
 %files devel
 %{_libdir}/libnemomodels-qt5.so
