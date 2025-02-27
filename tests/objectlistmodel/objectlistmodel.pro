@@ -13,7 +13,7 @@ LIBS += \
     -L../../src/lib \
     -lnemomodels-qt$${QT_MAJOR_VERSION}
 
-target.path = /opt/tests/nemo-qml-plugins/models
+target.path = /opt/tests/nemo-qml-plugin-models
 INSTALLS += target
 
 include(../../src/src.pri)

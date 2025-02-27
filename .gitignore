@@ -1,4 +1,5 @@
 moc_*
+*.moc
 *.o
 Makefile
 libnemomodels-qt*.so*
